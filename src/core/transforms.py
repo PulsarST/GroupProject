@@ -1,0 +1,166 @@
+from __future__ import annotations
+from dataclasses import dataclass, replace
+from typing import Tuple, Optional
+import json
+from functools import reduce
+from datetime import datetime
+
+
+# ---- Модели (иммутабельные) ----
+@dataclass(frozen=True)
+class Zone:
+    id: str
+    name: str
+    description: Optional[str] = None
+
+
+@dataclass(frozen=True)
+class Spot:
+    id: str
+    zone_id: str
+    label: Optional[str] = None
+
+
+@dataclass(frozen=True)
+class Tariff:
+    id: str
+    name: str
+    per_minute: int
+
+
+@dataclass(frozen=True)
+class Vehicle:
+    id: str
+    plate: str
+    type: Optional[str] = None
+
+
+@dataclass(frozen=True)
+class Event:
+    id: str
+    type: str  # ENTRY, EXIT, PAY
+    vehicle_id: str
+    spot_id: str
+    timestamp: str
+    amount: Optional[int] = None
+
+
+@dataclass(frozen=True)
+class Rule:
+    id: str
+    name: str
+    description: Optional[str] = None
+
+
+@dataclass(frozen=True)
+class Session:
+    id: str
+    vehicle_id: str
+    spot_id: str
+    start: str
+    end: Optional[str] = None
+    tariff_id: Optional[str] = None
+
+
+@dataclass(frozen=True)
+class Payment:
+    id: str
+    session_id: str
+    amount: int
+    timestamp: str
+
+
+@dataclass(frozen=True)
+class Violation:
+    id: str
+    session_id: Optional[str]
+    rule_id: str
+    timestamp: str
+    description: Optional[str] = None
+
+
+# ---- Загрузчик сид-данных ----
+def _to_tuple(cls, items):
+    return tuple(cls(**it) for it in items)
+
+
+def load_seed(path: str) -> Tuple[
+    Tuple[Zone, ...],
+    Tuple[Spot, ...],
+    Tuple[Tariff, ...],
+    Tuple[Vehicle, ...],
+    Tuple[Event, ...],
+    Tuple[Rule, ...],
+    Tuple[Session, ...],
+    Tuple[Payment, ...],
+    Tuple[Violation, ...]
+]:
+    with open(path, encoding="utf-8") as f:
+        j = json.load(f)
+    zones = _to_tuple(Zone, j.get("zones", []))
+    spots = _to_tuple(Spot, j.get("spots", []))
+    tariffs = _to_tuple(Tariff, j.get("tariffs", []))
+    vehicles = _to_tuple(Vehicle, j.get("vehicles", []))
+    events = _to_tuple(Event, j.get("events", []))
+    rules = _to_tuple(Rule, j.get("rules", []))
+    sessions: Tuple[Session, ...] = tuple()
+    payments: Tuple[Payment, ...] = tuple()
+    violations: Tuple[Violation, ...] = tuple()
+    return zones, spots, tariffs, vehicles, events, rules, sessions, payments, violations
+
+
+# ---- Манипуляции с сессиями ----
+def open_session(
+    sessions: Tuple[Session, ...],
+    vehicle_id: str,
+    spot_id: str,
+    start: str,
+    sid: Optional[str] = None
+) -> Tuple[Session, ...]:
+    sid = sid or f"s-{vehicle_id}-{start}"
+    new = Session(id=sid, vehicle_id=vehicle_id, spot_id=spot_id, start=start, end=None)
+    return tuple(list(sessions) + [new])
+
+
+def close_session(sessions: Tuple[Session, ...], sid: str, end: str) -> Tuple[Session, ...]:
+    def _close(s: Session):
+        return replace(s, end=end) if s.id == sid else s
+    return tuple(map(_close, sessions))
+
+
+def assign_spot(sessions: Tuple[Session, ...], sid: str, spot_id: str) -> Tuple[Session, ...]:
+    def _assign(s: Session):
+        return replace(s, spot_id=spot_id) if s.id == sid else s
+    return tuple(map(_assign, sessions))
+
+
+# ---- Финансовые операции ----
+def total_revenue(payments: Tuple[Payment, ...]) -> int:
+    return reduce(lambda acc, p: acc + p.amount, payments, 0)
+
+
+# ---- Вспомогательные функции ----
+def is_session_active(s: Session) -> bool:
+    return s.end is None
+
+
+def active_sessions(sessions: Tuple[Session, ...]) -> Tuple[Session, ...]:
+    return tuple(filter(is_session_active, sessions))
+
+def duration_minutes(s: Session) -> int:
+    if s.end is None:
+        return 0
+    # убираем Z, чтобы fromisoformat понимал строку
+    start_dt = datetime.fromisoformat(s.start.replace("Z", ""))
+    end_dt = datetime.fromisoformat(s.end.replace("Z", ""))
+    return int((end_dt - start_dt).total_seconds() / 60)
+
+def avg_session_duration(sessions: Tuple[Session, ...]) -> float:
+    closed = tuple(filter(lambda s: s.end is not None, sessions))
+    if not closed:
+        return 0.0
+
+    durations = tuple(map(duration_minutes, closed))
+    total = reduce(lambda acc, x: acc + x, durations, 0)
+    return total / len(durations)
+

@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Умная парковка — SPA</title>
+  <style>
+    :root{
+      --bg:#f6f7fb; --accent:#2b6cb0; --muted:#6b7280; --card:#ffffff;
+    }
+    *{box-sizing:border-box}
+    body{font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial; margin:0; background:var(--bg); color:#0f172a}
+    .app{display:flex; min-height:100vh;}
+    /* sidebar */
+    .sidebar{width:260px; background:var(--card); padding:16px; box-shadow:2px 0 8px rgba(15,23,42,0.04); position:relative;}
+    .brand{font-weight:700; color:var(--accent); margin-bottom:12px}
+    .menu{list-style:none; padding:0; margin:0}
+    .menu li{margin:6px 0}
+    .menu a{display:block; padding:10px 12px; border-radius:8px; text-decoration:none; color:inherit}
+    .menu a.active{background:linear-gradient(90deg,rgba(43,108,176,0.12),transparent); color:var(--accent); font-weight:600}
+    .hamburger{display:none}
+    /* main */
+    .main{flex:1; padding:24px}
+    .header-row{display:flex; justify-content:space-between; align-items:center; margin-bottom:16px}
+    .card{background:var(--card); padding:16px; border-radius:12px; box-shadow:0 1px 2px rgba(15,23,42,0.04)}
+    .metrics{display:flex; gap:12px; flex-wrap:wrap}
+    .metric{min-width:140px; padding:12px; border-radius:8px; background:#fff; box-shadow:0 1px 2px rgba(15,23,42,0.04)}
+    button{background:var(--accent); color:white; border:0; padding:8px 12px; border-radius:8px; cursor:pointer}
+    .muted{color:var(--muted)}
+    pre{background:#0b1220; color:#e6eef8; padding:12px; border-radius:8px; overflow:auto}
+    /* responsive */
+    @media (max-width:800px){
+      .sidebar{position:fixed; left:-320px; top:0; bottom:0; width:260px; z-index:30; transition:left .22s ease}
+      .sidebar.open{left:0}
+      .hamburger{display:inline-block; margin-right:8px}
+      .app{padding-top:56px}
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">Умная парковка</div>
+
+      <nav>
+        <ul class="menu" id="menu">
+          {% for m in menu %}
+            <li><a href="/{{ m }}" data-page="{{ m }}" class="{{ 'active' if m==choice else '' }}">{{ m }}</a></li>
+          {% endfor %}
+        </ul>
+      </nav>
+
+      <div style="position: absolute; bottom: 16px; left:16px; right:16px;">
+        <small class="muted">Версия: demo · Функциональный стиль</small>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="header-row">
+        <div style="display:flex; align-items:center;">
+          <button id="burger" class="hamburger">☰</button>
+          <h1 id="page-title">{{ choice }}</h1>
+        </div>
+        <div id="header-controls">
+          <!-- динамические контролы -->
+        </div>
+      </div>
+
+      <div id="content">
+        <!-- Overview -->
+        {% if choice == 'Overview' %}
+          <section id="overview">
+            <div class="card">
+              {% if not state %}
+                <p>Данные не загружены. Загрузите сид через <strong>Data → Load seed</strong>.</p>
+                <p><button id="load-btn">Load seed</button></p>
+              {% else %}
+                <div class="metrics">
+                  <div class="metric">
+                    <div class="muted">Zones</div>
+                    <div style="font-size:20px; font-weight:700;">{{ state['zones']|length }}</div>
+                  </div>
+                  <div class="metric">
+                    <div class="muted">Spots</div>
+                    <div style="font-size:20px; font-weight:700;">{{ state['spots']|length }}</div>
+                  </div>
+                  <div class="metric">
+                    <div class="muted">Tariffs</div>
+                    <div style="font-size:20px; font-weight:700;">{{ state['tariffs']|length }}</div>
+                  </div>
+                  <div class="metric">
+                    <div class="muted">Sessions active / closed</div>
+                    <div style="font-size:18px; font-weight:700;">
+                      {{ (state['sessions']|selectattr('end','equalto',None)|list)|length }}
+                      /
+                      {{ state['sessions']|length - ((state['sessions']|selectattr('end','equalto',None)|list)|length) }}
+                    </div>
+                  </div>
+                  <div class="metric">
+                    <div class="muted">Revenue</div>
+                    <div style="font-size:20px; font-weight:700;">
+                      {{ state['payments']|map(attribute='amount')|sum }}
+                    </div>
+                  </div>
+                </div>
+                <p style="margin-top:12px;"><button id="load-btn">Reload seed</button></p>
+              {% endif %}
+            </div>
+          </section>
+        {% elif choice == 'Data' %}
+          <section id="data" class="card">
+            <h3>Data</h3>
+            <p>Сид-файл: <code>data/seed.json</code></p>
+            <p><button id="load-btn">Load seed</button></p>
+            <div id="data-result" style="margin-top:12px"></div>
+          </section>
+
+        {% else %}
+          <section class="card">
+            <h3>{{ choice }}</h3>
+            <p>Раздел в разработке — демонстрация структуры проекта.</p>
+            <p class="muted">Можно тут реализовать детальную визуализацию событий, конвейеры (pipelines), FRP/async демонстрации и отчёты.</p>
+          </section>
+        {% endif %}
+      </div>
+    </main>
+  </div>
+
+<script>
+    (function(){
+      const sidebar = document.getElementById('sidebar');
+      const burger = document.getElementById('burger');
+      const menu = document.getElementById('menu');
+      const title = document.getElementById('page-title');
+      const content = document.getElementById('content');
+      const loadBtns = () => Array.from(document.querySelectorAll('#load-btn'));
+
+      // toggling sidebar on small screens
+      if (burger) {
+        burger.addEventListener('click', () => sidebar.classList.toggle('open'));
+      }
+
+      // SPA-like navigation: intercept clicks on menu links and fetch server-rendered page
+      menu.addEventListener('click', async (ev) => {
+        const a = ev.target.closest('a[data-page]');
+        if (!a) return;
+        ev.preventDefault();
+        const page = a.getAttribute('data-page');
+        // update active class
+        document.querySelectorAll('#menu a').forEach(el => el.classList.remove('active'));
+        a.classList.add('active');
+        // fetch server-rendered HTML for the page (FastAPI will serve TemplateResponse at /{page})
+        try {
+          const resp = await fetch('/' + encodeURIComponent(page));
+          const html = await resp.text();
+          // parse returned HTML and extract main content portion using a simple marker:
+          const tmp = document.createElement('div');
+          tmp.innerHTML = html;
+          const newContent = tmp.querySelector('#content');
+          const newTitle = tmp.querySelector('#page-title');
+          if (newContent) content.innerHTML = newContent.innerHTML;
+          if (newTitle) title.textContent = newTitle.textContent;
+          // close sidebar on mobile
+          sidebar.classList.remove('open');
+          attachLoadHandlers();
+        } catch (err) {
+          console.error(err);
+          alert('Ошибка при загрузке страницы');
+        }
+      });
+
+      // attach handler to load seed button(s)
+      async function handleLoad(e){
+        e && e.preventDefault();
+        const btn = e ? e.currentTarget : null;
+        if (btn) { btn.disabled = true; btn.textContent = 'Loading...'; }
+        try {
+          const resp = await fetch('/load-seed', { method: 'POST' });
+          if (!resp.ok) throw new Error('server error');
+          const j = await resp.json();
+          // показываем результат в месте Data или Overview
+          const result = document.getElementById('data-result');
+          if (result) result.innerHTML = `<div style="padding:10px;border-radius:8px;background:#eef2ff">Seed loaded — zones: ${j.zones}, spots: ${j.spots}</div>`;
+          // обновляем overview area (самый простой способ — загрузить Overview page)
+          try {
+            const ov = await fetch('/Overview');
+            const txt = await ov.text();
+            const tmp = document.createElement('div');
+            tmp.innerHTML = txt;
+            const newContent = tmp.querySelector('#content');
+            if (newContent) content.innerHTML = newContent.innerHTML;
+            attachLoadHandlers();
+          } catch (_) { /* ignore */ }
+        } catch (err) {
+          console.error(err);
+          alert('Не удалось загрузить seed: ' + err.message);
+        } finally {
+          if (btn) { btn.disabled = false; btn.textContent = 'Load seed'; }
+        }
+      }
+
+      function attachLoadHandlers(){
+        loadBtns().forEach(b => {
+          b.removeEventListener('click', handleLoad);
+          b.addEventListener('click', handleLoad);
+        });
+      }
+
+      // init
+      attachLoadHandlers();
+      // close sidebar if clicked outside (mobile)
+      document.addEventListener('click', (ev) => {
+        if (!sidebar.contains(ev.target) && !burger.contains(ev.target)) sidebar.classList.remove('open');
+      });
+    })();
+  </script>
+</body>
+</html>

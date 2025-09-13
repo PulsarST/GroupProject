@@ -1,0 +1,21 @@
+{
+  "zones": [
+    {"id": "z1", "name": "Zone A"},
+    {"id": "z2", "name": "Zone B"}
+  ],
+  "spots": [
+    {"id": "s1", "zone_id": "z1"},
+    {"id": "s2", "zone_id": "z1"},
+    {"id": "s3", "zone_id": "z2"}
+  ],
+  "tariffs": [
+    {"id": "t1", "name": "Standard", "per_minute": 2}
+  ],
+  "vehicles": [
+    {"id": "v1", "plate": "AA1234"},
+    {"id": "v2", "plate": "BB5678"}
+  ],
+  "events": [],
+  "rules": []
+}
+
