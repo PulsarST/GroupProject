@@ -14,9 +14,9 @@ py src/main.py
 ```
 
 ## ToDO:
-- [+] render an html
-- [+] make a side bar
-- [+] loading seed
+- [x] render an html
+- [x] make a side bar
+- [x] loading seed
 - [ ] 5 tests lab 1
 - [ ] lambda and functions closure + recursion
     - [ ] UI: filter places/session/zones/types/time
