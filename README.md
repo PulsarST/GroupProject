@@ -4,19 +4,29 @@ Group project for Function Programming in team
 Theme: Smart parking
 
 ## run the project
-1) Download packages:
+
+1) Сloning a repository:
+```
+git clone https://github.com/PulsarST/GroupProject.git
+```
+2) Create a venv:
+```
+python -m venv .venv
+source .venv/bin/activate # Unix
+```
+3) Download packages:
 ```
 pip install -r requirements.txt
 ```
-2) type the command:
+4) Type the command:
 ```
-py src/main.py
+python src/main.py
 ```
 
 ## ToDO:
-- [x] render an html
-- [x] make a side bar
-- [x] loading seed
+- [ ] render an html
+- [ ] make a side bar
+- [ ] loading seed
 - [ ] 5 tests lab 1
 - [ ] lambda and functions closure + recursion
     - [ ] UI: filter places/session/zones/types/time
