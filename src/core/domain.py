@@ -1,3 +1,6 @@
+# Заготовка без иммутабельности!
+
+
 from typing import Optional, List, Dict, Tuple
 from pydantic import BaseModel, Field
 
