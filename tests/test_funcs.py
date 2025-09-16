@@ -1,98 +1,115 @@
 from core.transforms import *
 from functools import reduce
 
+
 # Тесты базовых функций
 def test_spot_free_1():
-    assert is_spot_free(
-        (
-            Session(
-                "s-v1-13:53",
-                "v1",
-                "spot_1",
-                "13:53",
-                None,
-                "tariff_1",
+    assert (
+        is_spot_free(
+            (
+                Session(
+                    "s-v1-13:53",
+                    "v1",
+                    "spot_1",
+                    "13:53",
+                    None,
+                    "tariff_1",
+                ),
+                Session(
+                    "s-v2-10:32",
+                    "v2",
+                    "spot_2",
+                    "10:34",
+                    "10:48",
+                    "tariff_2",
+                ),
             ),
-            Session(
-                "s-v2-10:32",
-                "v2",
-                "spot_2",
-                "10:34",
-                "10:48",
-                "tariff_2",
-            ),
-        ),
-        "spot_1"
-    ) == False
+            "spot_1",
+        )
+        == False
+    )
+
 
 def test_spot_free_2():
-    assert is_spot_free(
-        (
-            Session(
-                "s-v1-13:53",
-                "v1",
-                "spot_1",
-                "13:53",
-                "13:54",
-                "tariff_1",
+    assert (
+        is_spot_free(
+            (
+                Session(
+                    "s-v1-13:53",
+                    "v1",
+                    "spot_1",
+                    "13:53",
+                    "13:54",
+                    "tariff_1",
+                ),
+                Session(
+                    "s-v2-10:32",
+                    "v2",
+                    "spot_2",
+                    "10:34",
+                    "10:48",
+                    "tariff_2",
+                ),
             ),
-            Session(
-                "s-v2-10:32",
-                "v2",
-                "spot_2",
-                "10:34",
-                "10:48",
-                "tariff_2",
-            ),
-        ),
-        "spot_1"
-    ) == True
+            "spot_1",
+        )
+        == True
+    )
+
 
 def test_vehicle_free_1():
-    assert is_vehicle_free(
-        (
-            Session(
-                "s-v1-13:53",
-                "v1",
-                "spot_1",
-                "13:53",
-                None,
-                "tariff_1",
+    assert (
+        is_vehicle_free(
+            (
+                Session(
+                    "s-v1-13:53",
+                    "v1",
+                    "spot_1",
+                    "13:53",
+                    None,
+                    "tariff_1",
+                ),
+                Session(
+                    "s-v2-10:32",
+                    "v2",
+                    "spot_2",
+                    "10:34",
+                    "10:48",
+                    "tariff_2",
+                ),
             ),
-            Session(
-                "s-v2-10:32",
-                "v2",
-                "spot_2",
-                "10:34",
-                "10:48",
-                "tariff_2",
-            ),
-        ),
-        "v1"
-    ) == False
+            "v1",
+        )
+        == False
+    )
+
 
 def test_vehicle_free_2():
-    assert is_vehicle_free(
-        (
-            Session(
-                "s-v1-13:53",
-                "v1",
-                "spot_1",
-                "13:53",
-                None,
-                "tariff_1",
+    assert (
+        is_vehicle_free(
+            (
+                Session(
+                    "s-v1-13:53",
+                    "v1",
+                    "spot_1",
+                    "13:53",
+                    None,
+                    "tariff_1",
+                ),
+                Session(
+                    "s-v2-10:32",
+                    "v2",
+                    "spot_2",
+                    "10:34",
+                    "10:48",
+                    "tariff_2",
+                ),
             ),
-            Session(
-                "s-v2-10:32",
-                "v2",
-                "spot_2",
-                "10:34",
-                "10:48",
-                "tariff_2",
-            ),
-        ),
-        "v2"
-    ) == True
+            "v2",
+        )
+        == True
+    )
+
 
 # Тест 1. Сессия на уже занятом месте НЕ должна открыться.
 def test_open_session_1():
