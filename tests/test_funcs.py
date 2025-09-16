@@ -3,16 +3,11 @@ from functools import reduce
 
 # Предложения для внесения изменений в transforms.py:
 
-# def is_spot_free(sessions: Tuple[Session, ...], spot: Spot) -> bool:
-#     return reduce(lambda acc, session: session.spot_id != spot.id and acc, sessions)
+# def is_spot_free(sessions: Tuple[Session, ...], spot_id: str) -> bool:
+#     return reduce(lambda acc, session: session.spot_id != spot_id and acc, sessions)
 
-# def free_spots(sessions: Tuple[Session, ...], spots: Tuple[Spot, ...]) -> Tuple[Spot, ...]:
-#     return tuple(filter(is_spot_free, [sessions] * len(spots), spots))
-#          
-#           Я надеюсь понятно почему [sessions] * len(spots)
-#
-#           потому что мне надо передать в функцию is_spot_free кортеж сессий, иначе
-#           он будет проверять спот 1 только в сессии 1, спот 2 только в сессии 2 и т.д.
+# def is_vehicle_free(sessions: Tuple[Session, ...], vehicle_id: str):
+#     return reduce(lambda acc, session: session.vehicle_id != vehicle_id and acc, sessions)
 
 # def close_session(
 #     sessions: Tuple[Session, ...], sid: str, end: str
@@ -21,6 +16,20 @@ from functools import reduce
 #         return replace(s, end=end) if s.id == sid and is_session_active(s) else s
 
 #     return tuple(map(_close, sessions))
+
+# def open_session(
+#     sessions: Tuple[Session, ...],
+#     vehicle_id: str,
+#     spot_id: str,
+#     start: str,
+#     sid: Optional[str] = None
+# ) -> Tuple[Session, ...]:
+#     sid = sid or f"s-{vehicle_id}-{start}"
+#     new = Session(id=sid, vehicle_id=vehicle_id, spot_id=spot_id, start=start, end=None)
+
+#     correct = is_spot_free(sessions, spot_id) and is_vehicle_free(sessions,vehicle_id)
+
+#     return tuple(list(sessions) + [new]) if correct else sessions
 
 
 # Тест 1. Сессия на уже занятом месте НЕ должна открыться.
@@ -183,6 +192,7 @@ def test_close_session_1():
         Session("session_2", "v2", "spot_2", "10:43", None, "tariff_1"),
     )
 
+
 # Тест 5: попытка закрыть уже закрытую ранее сессию. (НЕ None время не должно измениться на новое)
 def test_close_session_2():
     assert close_session(
@@ -197,31 +207,36 @@ def test_close_session_2():
         Session("session_2", "v2", "spot_2", "10:43", None, "tariff_1"),
     )
 
+
 # Тест 6: подсчёт итоговой выручки. (используется reduce)
 def test_total_revenue():
-    assert total_revenue(
-        (
-            Payment("payment_1","session_1",500,"10:55"),
-            Payment("payment_2","session_2",200,"10:57"),
-            Payment("payment_3","session_3",900,"10:59"),
-            Payment("payment_4","session_4",400,"11:05"),
-            Payment("payment_5","session_5",600,"11:13"),
-            Payment("payment_6","session_6",800,"11:24"),
+    assert (
+        total_revenue(
+            (
+                Payment("payment_1", "session_1", 500, "10:55"),
+                Payment("payment_2", "session_2", 200, "10:57"),
+                Payment("payment_3", "session_3", 900, "10:59"),
+                Payment("payment_4", "session_4", 400, "11:05"),
+                Payment("payment_5", "session_5", 600, "11:13"),
+                Payment("payment_6", "session_6", 800, "11:24"),
+            )
         )
-    ) == 3400
+        == 3400
+    )
+
 
 # Тест 7: список активных сессий. (используется filter)
 def test_active_sessions():
     assert active_sessions(
         (
-            Session("s1","v1","sp1","10:22","10:45","tariff1"),
-            Session("s2","v2","sp2","10:32",None,"tariff1"),
-            Session("s3","v3","sp3","10:36",None,"tariff1"),
-            Session("s4","v4","sp4","10:37","10:56","tariff1"),
-            Session("s5","v5","sp5","10:45",None,"tariff1"),
+            Session("s1", "v1", "sp1", "10:22", "10:45", "tariff1"),
+            Session("s2", "v2", "sp2", "10:32", None, "tariff1"),
+            Session("s3", "v3", "sp3", "10:36", None, "tariff1"),
+            Session("s4", "v4", "sp4", "10:37", "10:56", "tariff1"),
+            Session("s5", "v5", "sp5", "10:45", None, "tariff1"),
         )
     ) == (
-            Session("s2","v2","sp2","10:32",None,"tariff1"),
-            Session("s3","v3","sp3","10:36",None,"tariff1"),
-            Session("s5","v5","sp5","10:45",None,"tariff1"),
-        )
+        Session("s2", "v2", "sp2", "10:32", None, "tariff1"),
+        Session("s3", "v3", "sp3", "10:36", None, "tariff1"),
+        Session("s5", "v5", "sp5", "10:45", None, "tariff1"),
+    )
