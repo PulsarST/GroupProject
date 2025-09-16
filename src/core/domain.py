@@ -1,81 +1,90 @@
-# Заготовка без иммутабельности!
+#from __future__ import annotations
+from pydantic.dataclasses import dataclass as pydanticdataclass
+from typing import Optional, Tuple
+from datetime import datetime
+from enum import Enum
+#import uuid
 
 
-from typing import Optional, List, Dict, Tuple
-from pydantic import BaseModel, Field
+class EventType(str, Enum):
+    ENTRY = "ENTRY"
+    EXIT = "EXIT"
+    PAY = "PAY"
 
-# Зона парковки (A, B, C)
-class Zone(BaseModel):
-    id: int
+
+class SessionStatus(str, Enum):
+    ACTIVE = "active"
+    CLOSED = "closed"
+    LOST = "lost"
+
+
+@pydanticdataclass(frozen=True)
+class Zone:
+    id: str
     name: str
+    # description: Optional[str] = None
 
 
-# Место (kind: regular/disabled/ev; features: charger, covered)
-class Spot(BaseModel):
-    id: int
-    zone_id: int
+@pydanticdataclass(frozen=True)
+class Spot:
+    id: str
+    zone_id: str
     number: int
     kind: str
     features: Tuple[str, ...] = ()
 
 
-# Тариф (цены в тыйын/копейках)
-class Tariff(BaseModel):
-    id: int
-    zone_id: Optional[int] = None
-    kind: str
+@pydanticdataclass(frozen=True)
+class Tariff:
+    id: str
     base: int
+    kind: str
     per_hour: int
     free_minutes: int
+    zone_id: Optional[str] = None
 
 
-# Транспорт (car, van, ev)
-class Vehicle(BaseModel):
-    id: int
+@pydanticdataclass(frozen=True)
+class Vehicle:
+    id: str
     plate: str
     kind: str
 
 
-# Событие (ENTRY, EXIT, PAY, VIOLATION, SENSOR_OCCUPIED, SENSOR_FREE)
-class Event(BaseModel):
-    id: int
-    ts: str
-    name: str
-    payload: Dict
+# @pydanticdataclass(frozen=True)
+# class Event:
+#     id: str
+#     type: EventType
+#     vehicle_id: str
+#     spot_id: str
+#     timestamp: datetime
+#     amount: Optional[int] = None
 
 
-# Сессия (active|closed|lost)
-class Session(BaseModel):
-    id: int
-    vehicle_id: int
-    spot_id: Optional[int] = None
-    start: str
-    end: Optional[str] = None
-    status: str
+@pydanticdataclass(frozen=True)
+class Session:
+    id: str
+    vehicle_id: str
+    start: datetime
+    spot_id: Optional[str] = None
+    end: Optional[datetime] = None
+    tariff_id: Optional[str] = None
+    status: SessionStatus = SessionStatus.ACTIVE
 
 
-# Платёж
-class Payment(BaseModel):
-    id: int
-    session_id: int
+@pydanticdataclass(frozen=True)
+class Payment:
+    id: str
+    session_id: str
     amount: int
-    ts: str
-    method: str
+    timestamp: datetime
+    method: Optional[str] = None
 
 
-# Нарушение
-class Violation(BaseModel):
-    id: int
-    session_id: Optional[int] = None
-    plate: str
-    code: str
-    ts: str
-    amount: int
-    reason: str
-
-
-# Правило (напр. «макс. время стоянки 3 часа», «только EV»)
-class Rule(BaseModel):
-    id: int
-    kind: str
-    payload: Dict
+# @pydanticdataclass(frozen=True)
+# class Violation:
+#     id: str
+#     session_id: Optional[str]
+#     rule_id: str
+#     timestamp: datetime
+#     description: Optional[str] = None
