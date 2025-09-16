@@ -1,36 +1,98 @@
 from core.transforms import *
 from functools import reduce
 
-# Предложения для внесения изменений в transforms.py:
+# Тесты базовых функций
+def test_spot_free_1():
+    assert is_spot_free(
+        (
+            Session(
+                "s-v1-13:53",
+                "v1",
+                "spot_1",
+                "13:53",
+                None,
+                "tariff_1",
+            ),
+            Session(
+                "s-v2-10:32",
+                "v2",
+                "spot_2",
+                "10:34",
+                "10:48",
+                "tariff_2",
+            ),
+        ),
+        "spot_1"
+    ) == False
 
-# def is_spot_free(sessions: Tuple[Session, ...], spot_id: str) -> bool:
-#     return reduce(lambda acc, session: session.spot_id != spot_id and acc, sessions)
+def test_spot_free_2():
+    assert is_spot_free(
+        (
+            Session(
+                "s-v1-13:53",
+                "v1",
+                "spot_1",
+                "13:53",
+                "13:54",
+                "tariff_1",
+            ),
+            Session(
+                "s-v2-10:32",
+                "v2",
+                "spot_2",
+                "10:34",
+                "10:48",
+                "tariff_2",
+            ),
+        ),
+        "spot_1"
+    ) == True
 
-# def is_vehicle_free(sessions: Tuple[Session, ...], vehicle_id: str):
-#     return reduce(lambda acc, session: session.vehicle_id != vehicle_id and acc, sessions)
+def test_vehicle_free_1():
+    assert is_vehicle_free(
+        (
+            Session(
+                "s-v1-13:53",
+                "v1",
+                "spot_1",
+                "13:53",
+                None,
+                "tariff_1",
+            ),
+            Session(
+                "s-v2-10:32",
+                "v2",
+                "spot_2",
+                "10:34",
+                "10:48",
+                "tariff_2",
+            ),
+        ),
+        "v1"
+    ) == False
 
-# def close_session(
-#     sessions: Tuple[Session, ...], sid: str, end: str
-# ) -> Tuple[Session, ...]:
-#     def _close(s: Session):
-#         return replace(s, end=end) if s.id == sid and is_session_active(s) else s
-
-#     return tuple(map(_close, sessions))
-
-# def open_session(
-#     sessions: Tuple[Session, ...],
-#     vehicle_id: str,
-#     spot_id: str,
-#     start: str,
-#     sid: Optional[str] = None
-# ) -> Tuple[Session, ...]:
-#     sid = sid or f"s-{vehicle_id}-{start}"
-#     new = Session(id=sid, vehicle_id=vehicle_id, spot_id=spot_id, start=start, end=None)
-
-#     correct = is_spot_free(sessions, spot_id) and is_vehicle_free(sessions,vehicle_id)
-
-#     return tuple(list(sessions) + [new]) if correct else sessions
-
+def test_vehicle_free_2():
+    assert is_vehicle_free(
+        (
+            Session(
+                "s-v1-13:53",
+                "v1",
+                "spot_1",
+                "13:53",
+                None,
+                "tariff_1",
+            ),
+            Session(
+                "s-v2-10:32",
+                "v2",
+                "spot_2",
+                "10:34",
+                "10:48",
+                "tariff_2",
+            ),
+        ),
+        "v2"
+    ) == True
 
 # Тест 1. Сессия на уже занятом месте НЕ должна открыться.
 def test_open_session_1():

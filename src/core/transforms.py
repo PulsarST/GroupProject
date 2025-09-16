@@ -84,7 +84,9 @@ def _to_tuple(cls, items):
     return tuple(cls(**it) for it in items)
 
 
-def load_seed(path: str) -> Tuple[
+def load_seed(
+    path: str,
+) -> Tuple[
     Tuple[Zone, ...],
     Tuple[Spot, ...],
     Tuple[Tariff, ...],
@@ -93,7 +95,7 @@ def load_seed(path: str) -> Tuple[
     Tuple[Rule, ...],
     Tuple[Session, ...],
     Tuple[Payment, ...],
-    Tuple[Violation, ...]
+    Tuple[Violation, ...],
 ]:
     with open(path, encoding="utf-8") as f:
         j = json.load(f)
@@ -106,31 +108,72 @@ def load_seed(path: str) -> Tuple[
     sessions: Tuple[Session, ...] = tuple()
     payments: Tuple[Payment, ...] = tuple()
     violations: Tuple[Violation, ...] = tuple()
-    return zones, spots, tariffs, vehicles, events, rules, sessions, payments, violations
+    return (
+        zones,
+        spots,
+        tariffs,
+        vehicles,
+        events,
+        rules,
+        sessions,
+        payments,
+        violations,
+    )
 
 
 # ---- Манипуляции с сессиями ----
+# def open_session(
+#     sessions: Tuple[Session, ...],
+#     vehicle_id: str,
+#     spot_id: str,
+#     start: str,
+#     sid: Optional[str] = None,
+#     tariff_id: Optional[str] = None,
+# ) -> Tuple[Session, ...]:
+
+#     sid = sid or f"s-{vehicle_id}-{start}"
+#     new = Session(id=sid, vehicle_id=vehicle_id, spot_id=spot_id, start=start, end=None, tariff_id=tariff_id)
+#     return tuple(list(sessions) + [new])
+
 def open_session(
     sessions: Tuple[Session, ...],
     vehicle_id: str,
     spot_id: str,
     start: str,
-    sid: Optional[str] = None
+    sid: Optional[str] = None,
+    tariff_id: Optional[str] = None
 ) -> Tuple[Session, ...]:
     sid = sid or f"s-{vehicle_id}-{start}"
-    new = Session(id=sid, vehicle_id=vehicle_id, spot_id=spot_id, start=start, end=None)
-    return tuple(list(sessions) + [new])
+    new = Session(id=sid, vehicle_id=vehicle_id, spot_id=spot_id, start=start, end=None, tariff_id=tariff_id)
+
+    correct = is_spot_free(sessions, spot_id) and is_vehicle_free(sessions, vehicle_id)
+
+    return tuple(list(sessions) + [new]) if correct else sessions
 
 
-def close_session(sessions: Tuple[Session, ...], sid: str, end: str) -> Tuple[Session, ...]:
+# def close_session(
+#     sessions: Tuple[Session, ...], sid: str, end: str
+# ) -> Tuple[Session, ...]:
+#     def _close(s: Session):
+#         return replace(s, end=end) if s.id == sid else s
+
+#     return tuple(map(_close, sessions))
+
+def close_session(
+    sessions: Tuple[Session, ...], sid: str, end: str
+) -> Tuple[Session, ...]:
     def _close(s: Session):
-        return replace(s, end=end) if s.id == sid else s
+        return replace(s, end=end) if s.id == sid and is_session_active(s) else s
+
     return tuple(map(_close, sessions))
 
 
-def assign_spot(sessions: Tuple[Session, ...], sid: str, spot_id: str) -> Tuple[Session, ...]:
+def assign_spot(
+    sessions: Tuple[Session, ...], sid: str, spot_id: str
+) -> Tuple[Session, ...]:
     def _assign(s: Session):
         return replace(s, spot_id=spot_id) if s.id == sid else s
+
     return tuple(map(_assign, sessions))
 
 
@@ -143,9 +186,16 @@ def total_revenue(payments: Tuple[Payment, ...]) -> int:
 def is_session_active(s: Session) -> bool:
     return s.end is None
 
-
 def active_sessions(sessions: Tuple[Session, ...]) -> Tuple[Session, ...]:
     return tuple(filter(is_session_active, sessions))
+
+def is_spot_free(sessions: Tuple[Session, ...], spot_id: str) -> bool:
+    _is_occupied = lambda session: session.spot_id == spot_id and session.end == None
+    return len(tuple(filter(_is_occupied, sessions))) == 0
+
+def is_vehicle_free(sessions: Tuple[Session, ...], vehicle_id: str) -> bool:
+    _is_occupied = lambda session: session.vehicle_id == vehicle_id and session.end == None
+    return len(tuple(filter(_is_occupied, sessions))) == 0
 
 def duration_minutes(s: Session) -> int:
     if s.end is None:
@@ -155,6 +205,7 @@ def duration_minutes(s: Session) -> int:
     end_dt = datetime.fromisoformat(s.end.replace("Z", ""))
     return int((end_dt - start_dt).total_seconds() / 60)
 
+
 def avg_session_duration(sessions: Tuple[Session, ...]) -> float:
     closed = tuple(filter(lambda s: s.end is not None, sessions))
     if not closed:
@@ -163,4 +214,3 @@ def avg_session_duration(sessions: Tuple[Session, ...]) -> float:
     durations = tuple(map(duration_minutes, closed))
     total = reduce(lambda acc, x: acc + x, durations, 0)
     return total / len(durations)
-
