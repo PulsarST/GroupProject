@@ -1,80 +1,58 @@
 # from __future__ import annotations
-from pydantic.dataclasses import dataclass as pydanticdataclass
-from typing import Optional
+from pydantic.dataclasses import dataclass
+from pydantic import Field
+from typing import Optional, Set, List, Dict
 from datetime import datetime
 from enum import Enum
+from enums import *
 import uuid
-from dataclasses import field
 
-
-class EventType(str, Enum):
-    ENTRY = "ENTRY"
-    EXIT = "EXIT"
-    PAY = "PAY"
-    VIOLATION = "VIOLATION"
-    SPOT_AVAILABLE = "SPOT_AVAILABLE"
-    SPOT_OCCUPIED = "SPOT_OCCUPIED"
-
-
-class PaymentType(str, Enum):
-    CARD = "CARD"
-    CASH = "CASH"
-    ANOTHER = "ANOTHER"
-
-
-class SessionStatus(str, Enum):
-    ACTIVE = "ACTIVE"
-    CLOSED = "CLOSED"
-
-
-@pydanticdataclass(frozen=True)
+@dataclass(frozen=True)
 class Zone:
-    uid: uuid.UUID = field(default_factory=uuid.uuid4)
     name: str
+    uid: uuid.UUID = Field(default_factory=uuid.uuid4)
 
 
-@pydanticdataclass(frozen=True)
+@dataclass(frozen=True)
 class Spot:
-    uid: uuid.UUID = field(default_factory=uuid.uuid4)
-    zone_id: str
+    id: str
+    zone_id: uuid.UUID
     number: int
-    status: str  # (occupied / available)
-    kind: str    # (unavailable / accessible / standard / truck)
+    status: SpotStatus
+    kind: SpotKind
+    features: Optional[List[str]] = Field(default_factory=list)
+    uid: uuid.UUID = Field(default_factory=uuid.uuid4)
 
 
-@pydanticdataclass(frozen=True)
+@dataclass(frozen=True)
 class Tariff:
-    uid: uuid.UUID = field(default_factory=uuid.uuid4)
     id: str
     base: int              # базовая ставка
-    kind: str              # (accessible / standard / holiday)
+    kind: TariffKind
     per_minutes: int
     free_minutes: int
-    zone_id: Optional[str] = None
+    zone_id: Optional[uuid.UUID] = None
+    uid: uuid.UUID = Field(default_factory=uuid.uuid4)
 
-
-@pydanticdataclass(frozen=True)
+@dataclass(frozen=True)
 class Vehicle:
-    uid: uuid.UUID = field(default_factory=uuid.uuid4)
     id: str
     plate: str             # example: 123ABC05
-    kind: str              # (bike / car / truck)
+    kind: VehicleKind
+    uid: uuid.UUID = Field(default_factory=uuid.uuid4)
 
 
-@pydanticdataclass(frozen=True)
+@dataclass(frozen=True)
 class Event:
-    uid: uuid.UUID = field(default_factory=uuid.uuid4)
     id: str
     type: EventType
-    spot_id: str
     ts: datetime
-    amount: Optional[int] = None
-    vehicle_id: Optional[str] = None
+    payload: Optional[Dict] = None
+    uid: uuid.UUID = Field(default_factory=uuid.uuid4)
 
 
-@pydanticdataclass(frozen=True)
+@dataclass(frozen=True)
 class Session:
-    uid: uuid.UUID = field(default_factory=uuid.uuid4)
     id: str
     vehicle_id: str
     start: datetime        # utime
@@ -82,23 +60,33 @@ class Session:
     end: Optional[datetime] = None
     tariff_id: Optional[str] = None
     status: SessionStatus = SessionStatus.ACTIVE
+    uid: uuid.UUID = Field(default_factory=uuid.uuid4)
 
-
-@pydanticdataclass(frozen=True)
+@dataclass(frozen=True)
 class Payment:
-    uid: uuid.UUID = field(default_factory=uuid.uuid4)
     id: str
     session_id: str
     amount: int
     ts: datetime
     method: Optional[PaymentType] = None
+    uid: uuid.UUID = Field(default_factory=uuid.uuid4)
 
 
-@pydanticdataclass(frozen=True)
+@dataclass(frozen=True)
 class Violation:  # нарушение
-    uid: uuid.UUID = field(default_factory=uuid.uuid4)
     id: str
     session_id: Optional[str]
-    # rule_id: str # TODO
+    amount: int
+    plate: str
     ts: datetime
-    description: Optional[str] = None
+    code: str
+    reason: Optional[str] = None
+    uid: uuid.UUID = Field(default_factory=uuid.uuid4)
+
+
+@dataclass(frozen=True)
+class Rule:
+    id: str
+    kind: RuleKind
+    payload: dict   # параметры правила (например {"hours": 3} или {"zone": "A"})
+    uid: uuid.UUID = Field(default_factory=uuid.uuid4)

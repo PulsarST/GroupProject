@@ -1,9 +1,15 @@
 from __future__ import annotations
+
+import uuid
 from dataclasses import dataclass, replace
 from typing import Tuple, Optional
 import json
 from functools import reduce
 from datetime import datetime
+
+from enum import *
+
+from src.core.enums import SpotStatus, SpotKind
 
 
 # ---- Модели (иммутабельные) ----
@@ -16,14 +22,15 @@ class Zone:
 
 @dataclass(frozen=True)
 class Spot:
-    id: str
-    zone_id: str
+    zone_id: uuid.UUID
+    status: SpotStatus
+    kind: SpotKind
     label: Optional[str] = None
 
 
 @dataclass(frozen=True)
 class Tariff:
-    id: str
+    uid: uuid.UUID
     name: str
     per_minute: int
 
