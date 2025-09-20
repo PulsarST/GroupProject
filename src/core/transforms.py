@@ -7,84 +7,8 @@ import json
 from functools import reduce
 from datetime import datetime
 
-from enum import *
-
-from src.core.enums import SpotStatus, SpotKind
-
-
-# ---- Модели (иммутабельные) ----
-@dataclass(frozen=True)
-class Zone:
-    id: str
-    name: str
-    description: Optional[str] = None
-
-
-@dataclass(frozen=True)
-class Spot:
-    zone_id: uuid.UUID
-    status: SpotStatus
-    kind: SpotKind
-    label: Optional[str] = None
-
-
-@dataclass(frozen=True)
-class Tariff:
-    uid: uuid.UUID
-    name: str
-    per_minute: int
-
-
-@dataclass(frozen=True)
-class Vehicle:
-    id: str
-    plate: str
-    type: Optional[str] = None
-
-
-@dataclass(frozen=True)
-class Event:
-    id: str
-    type: str  # ENTRY, EXIT, PAY
-    vehicle_id: str
-    spot_id: str
-    timestamp: str
-    amount: Optional[int] = None
-
-
-@dataclass(frozen=True)
-class Rule:
-    id: str
-    name: str
-    description: Optional[str] = None
-
-
-@dataclass(frozen=True)
-class Session:
-    id: str
-    vehicle_id: str
-    spot_id: str
-    start: str
-    end: Optional[str] = None
-    tariff_id: Optional[str] = None
-
-
-@dataclass(frozen=True)
-class Payment:
-    id: str
-    session_id: str
-    amount: int
-    timestamp: str
-
-
-@dataclass(frozen=True)
-class Violation:
-    id: str
-    session_id: Optional[str]
-    rule_id: str
-    timestamp: str
-    description: Optional[str] = None
-
+from .domain import *
+from .enums import *
 
 # ---- Загрузчик сид-данных ----
 def _to_tuple(cls, items):

@@ -4,7 +4,7 @@ from pydantic import Field
 from typing import Optional, Set, List, Dict
 from datetime import datetime
 from enum import Enum
-from enums import *
+from .enums import *
 import uuid
 
 @dataclass(frozen=True)
