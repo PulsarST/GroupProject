@@ -3,7 +3,7 @@ from pydantic.dataclasses import dataclass
 from pydantic import Field
 from typing import Optional, List, Dict
 from datetime import datetime
-from enums import (
+from .enums import (
     SpotStatus, SpotKind, TariffKind, VehicleKind,
     EventType, SessionStatus, PaymentType, RuleKind
 )
@@ -33,7 +33,7 @@ class Tariff:
     base: int              # базовая ставка
     kind: TariffKind
     per_hour: int
-    free_minute: int
+    free_minutes: int
     zone_id: Optional[str] = None
     uid: uuid.UUID = Field(default_factory=uuid.uuid4)
 
