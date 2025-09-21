@@ -1,14 +1,17 @@
 # from __future__ import annotations ###
 from pydantic.dataclasses import dataclass
 from pydantic import Field
-from typing import Optional, Set, List, Dict
+from typing import Optional, List, Dict
 from datetime import datetime
-from enum import Enum
-from .enums import *
+from enums import (
+    SpotStatus, SpotKind, TariffKind, VehicleKind,
+    EventType, SessionStatus, PaymentType, RuleKind
+)
 import uuid
 
 @dataclass(frozen=True)
 class Zone:
+    id: str
     name: str
     uid: uuid.UUID = Field(default_factory=uuid.uuid4)
 
@@ -16,7 +19,7 @@ class Zone:
 @dataclass(frozen=True)
 class Spot:
     id: str
-    zone_id: uuid.UUID
+    zone_id: str
     number: int
     status: SpotStatus
     kind: SpotKind
@@ -29,9 +32,9 @@ class Tariff:
     id: str
     base: int              # базовая ставка
     kind: TariffKind
-    per_minutes: int
-    free_minutes: int
-    zone_id: Optional[uuid.UUID] = None
+    per_hour: int
+    free_minute: int
+    zone_id: Optional[str] = None
     uid: uuid.UUID = Field(default_factory=uuid.uuid4)
 
 @dataclass(frozen=True)
@@ -76,10 +79,10 @@ class Payment:
 class Violation:  # нарушение
     id: str
     session_id: Optional[str]
-    amount: int
     plate: str
     ts: datetime
     code: str
+    amount: Optional[int] = None
     reason: Optional[str] = None
     uid: uuid.UUID = Field(default_factory=uuid.uuid4)
 
