@@ -70,12 +70,13 @@ def open_session(
     sessions: Tuple[Session, ...],
     vehicle_id: str,
     spot_id: str,
-    start: str,
+    start: datetime,
     sid: Optional[str] = None,
-    tariff_id: Optional[str] = None
+    tariff_id: Optional[str] = None,
 ) -> Tuple[Session, ...]:
     sid = sid or f"s-{vehicle_id}-{start}"
-    new = Session(id=sid, vehicle_id=vehicle_id, spot_id=spot_id, start=start, end=None, tariff_id=tariff_id)
+
+    new = Session(id=sid, vehicle_id=vehicle_id, start=start, spot_id=spot_id, end=None, tariff_id=tariff_id)
 
     correct = is_spot_free(sessions, spot_id) and is_vehicle_free(sessions, vehicle_id)
 
@@ -91,7 +92,7 @@ def open_session(
 #     return tuple(map(_close, sessions))
 
 def close_session(
-    sessions: Tuple[Session, ...], sid: str, end: str
+    sessions: Tuple[Session, ...], sid: str, end: datetime
 ) -> Tuple[Session, ...]:
     def _close(s: Session):
         return replace(s, end=end) if s.id == sid and is_session_active(s) else s
@@ -115,7 +116,7 @@ def total_revenue(payments: Tuple[Payment, ...]) -> int:
 
 # ---- Вспомогательные функции ----
 def is_session_active(s: Session) -> bool:
-    return s.end is None
+    return s.status == SessionStatus.ACTIVE
 
 def active_sessions(sessions: Tuple[Session, ...]) -> Tuple[Session, ...]:
     return tuple(filter(is_session_active, sessions))

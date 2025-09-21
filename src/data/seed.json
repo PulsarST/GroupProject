@@ -101,7 +101,7 @@
     {"id": "E3", "ts": "2025-09-20T10:30:00", "type": "pay", "payload": {"amount": 150, "method": "card"}},
     {"id": "E4", "ts": "2025-09-20T12:30:00", "type": "violation", "payload": {"session_id":"SE1", "plate": "123ABC05", "rule_id": "R1"}},
     {"id": "E5", "ts": "2025-09-20T12:32:00", "type": "exit", "payload": {"vehicle_id": "V1", "spot_id": "S35"}},
-    {"id": "E5", "ts": "2025-09-20T12:35:00", "type": "spot_available", "payload": {"spot_id": "S35"}}
+    {"id": "E6", "ts": "2025-09-20T12:35:00", "type": "spot_available", "payload": {"spot_id": "S35"}}
   ],
   "sessions": [
     {"id": "SE1", "vehicle_id": "V1", "spot_id": "S35", "start": "2025-09-20T09:00:00", "end": null, "status": "active"}
