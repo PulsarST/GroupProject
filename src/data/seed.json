@@ -104,7 +104,7 @@
     {"id": "E6", "ts": "2025-09-20T12:35:00", "type": "spot_available", "payload": {"spot_id": "S35"}}
   ],
   "sessions": [
-    {"id": "SE1", "vehicle_id": "V1", "spot_id": "S35", "start": "2025-09-20T09:00:00", "end": null, "status": "active"}
+    {"id": "SE1", "vehicle_id": "V1", "start": "2025-09-20T09:00:00", "spot_id": "S35", "end": "2025-09-20T12:32:00", "status": "closed"}
   ],
   "payments": [
     {"id": "P1", "session_id": "SE1", "amount": 150, "ts": "2025-09-20T10:30:00", "method": "card"}

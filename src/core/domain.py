@@ -4,10 +4,17 @@ from pydantic import Field
 from typing import Optional, List, Dict
 from datetime import datetime
 from .enums import (
-    SpotStatus, SpotKind, TariffKind, VehicleKind,
-    EventType, SessionStatus, PaymentType, RuleKind
+    SpotStatus,
+    SpotKind,
+    TariffKind,
+    VehicleKind,
+    EventType,
+    SessionStatus,
+    PaymentType,
+    RuleKind,
 )
 import uuid
+
 
 @dataclass(frozen=True)
 class Zone:
@@ -30,17 +37,18 @@ class Spot:
 @dataclass(frozen=True)
 class Tariff:
     id: str
-    base: int              # базовая ставка
+    base: int  # базовая ставка
     kind: TariffKind
     per_hour: int
     free_minutes: int
     zone_id: Optional[str] = None
     uid: uuid.UUID = Field(default_factory=uuid.uuid4)
 
+
 @dataclass(frozen=True)
 class Vehicle:
     id: str
-    plate: str             # example: 123ABC05
+    plate: str  # example: 123ABC05
     kind: VehicleKind
     uid: uuid.UUID = Field(default_factory=uuid.uuid4)
 
@@ -58,12 +66,14 @@ class Event:
 class Session:
     id: str
     vehicle_id: str
-    start: datetime        # utime
+    start: datetime  # utime
+    spot_status: SpotStatus
     spot_id: Optional[str] = None
     end: Optional[datetime] = None
     tariff_id: Optional[str] = None
     status: SessionStatus = SessionStatus.ACTIVE
     uid: uuid.UUID = Field(default_factory=uuid.uuid4)
+
 
 @dataclass(frozen=True)
 class Payment:
@@ -91,5 +101,5 @@ class Violation:  # нарушение
 class Rule:
     id: str
     kind: RuleKind
-    payload: dict   # параметры правила (например {"hours": 3} или {"zone": "A"})
+    payload: dict  # параметры правила (например {"hours": 3} или {"zone": "A"})
     uid: uuid.UUID = Field(default_factory=uuid.uuid4)

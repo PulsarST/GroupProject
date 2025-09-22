@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class SpotStatus(str, Enum):
     OCCUPIED = "occupied"
     AVAILABLE = "available"
@@ -42,6 +43,7 @@ class PaymentType(str, Enum):
     CARD = "card"
     CASH = "cash"
     ANOTHER = "another"
+
 
 class RuleKind(str, Enum):
     MAX_PARKING_TIME = "max_parking_time"

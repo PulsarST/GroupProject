@@ -5,6 +5,7 @@
   "tests/test_funcs.py::test_open_session_1",
   "tests/test_funcs.py::test_open_session_2",
   "tests/test_funcs.py::test_open_session_3",
+  "tests/test_funcs.py::test_spot_avaliable_1",
   "tests/test_funcs.py::test_spot_free",
   "tests/test_funcs.py::test_spot_free_1",
   "tests/test_funcs.py::test_spot_free_2",
