@@ -1,13 +1,27 @@
 from core.transforms import *
 from functools import reduce
 
+###############################
+# ---Тесты базовых функций--- #
+###############################
 
-# Тесты базовых функций
+#   Т.к у нас у моделей есть uid, то пришлось написать функцию,
+#   Которая будет сравнивать 2 объекта, при этом игнорируя
+#   Аттрибут uid
+
+
 def test_same_data():
     assert is_obj_data_same(
-        Payment("p1","s1",600,"2025-10-10T10:00:00",PaymentType.CARD),
-        Payment("p1","s1",600,"2025-10-10T10:00:00",PaymentType.CARD),
+        Payment("p1", "s1", 600, "2025-10-10T10:00:00", PaymentType.CARD),
+        Payment("p1", "s1", 600, "2025-10-10T10:00:00", PaymentType.CARD),
     )
+
+
+#   В классе сессии есть два аттрибута состояний:
+#   Статус сессии и статус места
+#   Данные тесты показывают, что функция
+#   Отличает состояние сессии от состояния места
+
 
 def test_spot_avaliable_1():
     (s1, s2) = (
@@ -17,9 +31,9 @@ def test_spot_avaliable_1():
             "2025-09-23T13:53:00",
             SpotStatus.OCCUPIED,
             "spot_1",
-            None,
+            "2025-09-23T13:58:00",
             "tariff_1",
-            SessionStatus.ACTIVE,
+            SessionStatus.CLOSED,
         ),
         Session(
             "s2",
@@ -71,6 +85,10 @@ def test_spot_free_2():
         )
         == True
     )
+
+
+#   Тесты показывают, что имея кортеж сессий, мы можем понять,
+#   есть ли сессия на транспорт
 
 
 def test_vehicle_free_1():
@@ -137,7 +155,15 @@ def test_vehicle_free_2():
     )
 
 
-# Тест 1. Сессия на уже занятом месте НЕ должна открыться.
+##########################
+# ---Основные функции--- #
+##########################
+
+#   Открытие сессии на споте, на котором
+#   уже открыта сессия. Тест показывает,
+#   что открыть данную сессию невозможно.
+
+
 def test_open_session_1():
     (s1, s2) = (
         Session(
@@ -162,21 +188,28 @@ def test_open_session_1():
         ),
     )
 
-    assert is_tuple_data_same(open_session(
-        (s1, s2),
-        "v3",
-        "spot_1",
-        SpotStatus.AVAILABLE,
-        "2025-09-23T13:55:00",
-        "s3",
-        "tariff_2",
-    ), (
-        s1,
-        s2,
-    ))
+    assert is_tuple_data_same(
+        open_session(
+            (s1, s2),
+            "v3",
+            "spot_1",
+            SpotStatus.AVAILABLE,
+            "2025-09-23T13:55:00",
+            "s3",
+            "tariff_2",
+        ),
+        (
+            s1,
+            s2,
+        ),
+    )
 
 
-# Тест 2. Открытие сессии на свободной зоне
+#   Открытие сессии на споте, сессия на котором была,
+#   но уже закрыта + на одном и том же транспорте, что
+#   и напредыдущей сессии. Сессия должна открыться.
+
+
 def test_open_session_2():
     (s1, s2) = (
         Session(
@@ -203,34 +236,38 @@ def test_open_session_2():
 
     result = open_session(
         (s1, s2),
-        "v3",
-        "spot_3",
+        "v2",
+        "spot_2",
         SpotStatus.AVAILABLE,
         "2025-09-23T13:55:00",
         "s3",
         "tariff_2",
     )
 
-    assert is_tuple_data_same(result, 
-                        (
-        s1,
-        s2,
-        Session(
-            "s3",
-            "v3",
-            "2025-09-23T13:55:00",
-            SpotStatus.AVAILABLE,
-            "spot_3",
-            None,
-            "tariff_2",
-            SessionStatus.ACTIVE,
+    assert is_tuple_data_same(
+        result,
+        (
+            s1,
+            s2,
+            Session(
+                "s3",
+                "v2",
+                "2025-09-23T13:55:00",
+                SpotStatus.AVAILABLE,
+                "spot_2",
+                None,
+                "tariff_2",
+                SessionStatus.ACTIVE,
+            ),
         ),
     )
-    )
 
 
-# Тест 3. Может быть только одна активная сессия на транспорт
-# Но при этом неважно занял ли он место или нет
+#   Транспорт хочет открыть вторую активную сессию.
+#   Тест показывает, что на транспорт должно быть
+#   не больше одной активной сессии в одно время
+
+
 def test_open_session_3():
     (s1, s2) = (
         Session(
@@ -255,18 +292,29 @@ def test_open_session_3():
         ),
     )
 
-    assert is_tuple_data_same(open_session(
+    assert is_tuple_data_same(
+        open_session(
+            (s1, s2),
+            "v1",
+            "spot_3",
+            SpotStatus.AVAILABLE,
+            "2025-09-13T13:55:00",
+            None,
+            "tariff_2",
+        ),
         (s1, s2),
-        "v1",
-        "spot_3",
-        SpotStatus.AVAILABLE,
-        "2025-09-13T13:55:00",
-        None,
-        "tariff_2",
-    ), (s1, s2))
+    )
 
 
-# Тест 4: обычное закрытие сессии (используется map)
+############################
+# ---ИСПОЛЬЗУЕТСЯ map()--- #
+############################
+
+#   Закрытие активной сессии.
+#   Статус сессии должен измениться на CLOSED,
+#   конец сессии меняется с None на заданное время
+
+
 def test_close_session_1():
 
     a: Session = Session(
@@ -290,26 +338,32 @@ def test_close_session_1():
         SessionStatus.ACTIVE,
     )
 
-    assert is_tuple_data_same(close_session(
-        (a, b),
-        "session_1",
-        "2025-09-13T11:05:00",
-    ), (
-        Session(
+    assert is_tuple_data_same(
+        close_session(
+            (a, b),
             "session_1",
-            "v1",
-            "2025-09-13T10:55:00",
-            SpotStatus.AVAILABLE,
-            "spot_1",
             "2025-09-13T11:05:00",
-            "tariff_1",
-            SessionStatus.CLOSED,
         ),
-        b,
-    ))
+        (
+            Session(
+                "session_1",
+                "v1",
+                "2025-09-13T10:55:00",
+                SpotStatus.AVAILABLE,
+                "spot_1",
+                "2025-09-13T11:05:00",
+                "tariff_1",
+                SessionStatus.CLOSED,
+            ),
+            b,
+        ),
+    )
 
 
-# Тест 5: попытка закрыть уже закрытую ранее сессию. (НЕ None время не должно измениться на новое)
+#   Закрытие уже закрытой сессии
+#   Время конца сессии не должно измениться
+
+
 def test_close_session_2():
 
     a: Session = Session(
@@ -333,17 +387,28 @@ def test_close_session_2():
         SessionStatus.ACTIVE,
     )
 
-    assert is_tuple_data_same(close_session(
-        (a, b),
-        "session_1",
-        "2025-09-13T11:05:00",
-    ), (
-        a,
-        b,
-    ))
+    assert is_tuple_data_same(
+        close_session(
+            (a, b),
+            "session_1",
+            "2025-09-13T11:05:00",
+        ),
+        (
+            a,
+            b,
+        ),
+    )
 
 
-# Тест 6: подсчёт итоговой выручки. (используется reduce)
+###############################
+# ---ИСПОЛЬЗУЕТСЯ reduce()--- #
+###############################
+
+#   Подсчёт общей суммы дохода.
+#   Функция должна сложить значения amount
+#   во всех объектах Payment.
+
+
 def test_total_revenue():
     assert (
         total_revenue(
@@ -360,8 +425,15 @@ def test_total_revenue():
     )
 
 
-# Тест 7: список активных сессий. (используется filter)
-#
+###############################
+# ---ИСПОЛЬЗУЕТСЯ filter()--- #
+###############################
+
+#   Отфильтровывание активных сессий
+#   Функция должна вернуть кортеж
+#   активных сессий.
+
+
 def test_active_sessions():
 
     (s1, s2, s3, s4, s5) = (

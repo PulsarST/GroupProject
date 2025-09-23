@@ -183,16 +183,21 @@ def avg_session_duration(sessions: Tuple[Session, ...]) -> float:
     total = reduce(lambda acc, x: acc + x, durations, 0)
     return total / len(durations)
 
+
 def is_obj_data_same(a: object, b: object) -> bool:
     a_dict = copy(a.__dict__)
     b_dict = copy(b.__dict__)
-    a_dict.pop('uid')
-    b_dict.pop('uid')
+    a_dict.pop("uid")
+    b_dict.pop("uid")
 
-    return reduce(lambda acc, next : acc and next, [i == b_dict[key_i] for key_i, i in a_dict.items()])
+    return reduce(
+        lambda acc, next: acc and next,
+        [i == b_dict[key_i] for key_i, i in a_dict.items()],
+    )
+
 
 def is_tuple_data_same(a: Tuple[object, ...], b: Tuple[object, ...]) -> bool:
     return len(a) == len(b) and reduce(
         lambda acc, next: acc and next,
-        [is_obj_data_same(a[i],b[i]) for i in range(len(a))]
+        [is_obj_data_same(a[i], b[i]) for i in range(len(a))],
     )
