@@ -3,6 +3,12 @@ from functools import reduce
 
 
 # Тесты базовых функций
+def test_same_data():
+    assert is_obj_data_same(
+        Payment("p1","s1",600,"2025-10-10T10:00:00",PaymentType.CARD),
+        Payment("p1","s1",600,"2025-10-10T10:00:00",PaymentType.CARD),
+    )
+
 def test_spot_avaliable_1():
     (s1, s2) = (
         Session(
@@ -156,7 +162,7 @@ def test_open_session_1():
         ),
     )
 
-    assert open_session(
+    assert is_tuple_data_same(open_session(
         (s1, s2),
         "v3",
         "spot_1",
@@ -164,10 +170,10 @@ def test_open_session_1():
         "2025-09-23T13:55:00",
         "s3",
         "tariff_2",
-    ) == (
+    ), (
         s1,
         s2,
-    )
+    ))
 
 
 # Тест 2. Открытие сессии на свободной зоне
@@ -205,7 +211,8 @@ def test_open_session_2():
         "tariff_2",
     )
 
-    assert result == (
+    assert is_tuple_data_same(result, 
+                        (
         s1,
         s2,
         Session(
@@ -217,8 +224,8 @@ def test_open_session_2():
             None,
             "tariff_2",
             SessionStatus.ACTIVE,
-            result[2].uid,
         ),
+    )
     )
 
 
@@ -248,7 +255,7 @@ def test_open_session_3():
         ),
     )
 
-    assert open_session(
+    assert is_tuple_data_same(open_session(
         (s1, s2),
         "v1",
         "spot_3",
@@ -256,7 +263,7 @@ def test_open_session_3():
         "2025-09-13T13:55:00",
         None,
         "tariff_2",
-    ) == (s1, s2)
+    ), (s1, s2))
 
 
 # Тест 4: обычное закрытие сессии (используется map)
@@ -283,11 +290,11 @@ def test_close_session_1():
         SessionStatus.ACTIVE,
     )
 
-    assert close_session(
+    assert is_tuple_data_same(close_session(
         (a, b),
         "session_1",
         "2025-09-13T11:05:00",
-    ) == (
+    ), (
         Session(
             "session_1",
             "v1",
@@ -297,10 +304,9 @@ def test_close_session_1():
             "2025-09-13T11:05:00",
             "tariff_1",
             SessionStatus.CLOSED,
-            a.uid,
         ),
         b,
-    )
+    ))
 
 
 # Тест 5: попытка закрыть уже закрытую ранее сессию. (НЕ None время не должно измениться на новое)
@@ -327,14 +333,14 @@ def test_close_session_2():
         SessionStatus.ACTIVE,
     )
 
-    assert close_session(
+    assert is_tuple_data_same(close_session(
         (a, b),
         "session_1",
         "2025-09-13T11:05:00",
-    ) == (
+    ), (
         a,
         b,
-    )
+    ))
 
 
 # Тест 6: подсчёт итоговой выручки. (используется reduce)
@@ -411,4 +417,4 @@ def test_active_sessions():
         ),
     )
 
-    assert active_sessions((s1, s2, s3, s4, s5)) == (s2, s3, s5)
+    assert is_tuple_data_same(active_sessions((s1, s2, s3, s4, s5)), (s2, s3, s5))
