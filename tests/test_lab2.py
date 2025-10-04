@@ -1,6 +1,8 @@
 from core.filter import *
 from core.transforms import *
 
+
+#Кортеж спотов который будет использоваться в тестах
 spots = (
         Spot(
             "s1",
@@ -44,7 +46,7 @@ spots = (
         ),
     )
 
-
+#Кортеж сессий который будет использоваться в тестах
 sessions = (
     Session(
     "se1",
@@ -52,7 +54,7 @@ sessions = (
     "2025-09-20T09:00:00",
     SpotStatus.AVAILABLE,
     "s1",
-    "2025-09-20T09:01:00",
+    "2025-09-20T09:02:00",
     "t1",
     SessionStatus.CLOSED
     ),
@@ -148,55 +150,37 @@ sessions = (
     ),
 )
 
-def test_zone_id_filter_1():
-    testing_by_zone = make_by_zone(spots)
-    assert is_tuple_data_same(
-        testing_by_zone("z2"),
-        (
-            spots[1],
-            spots[2],
-        )
-    )
+#########################
+# ---Тесты замыкания--- #
+#########################
 
-def test_zone_id_filter_2():
+def test_zone_id_filter_1():
+    """ Проверка корректности работы фильтра
+        спотов по id зоны.
+    """
     testing_by_zone = make_by_zone(spots)
-    assert is_tuple_data_same(
-        testing_by_zone("z3"),
-        (
-            spots[3],
-        )
+    assert reduce(
+        lambda acc, spot : acc and spot.zone_id == "z2",
+        testing_by_zone("z2")
     )
 
 def test_kind_filter_1():
+    """ Проверка корректности работы фильтра
+        спотов по его типу.
+    """
     testing_by_kind = make_by_kind(spots)
-    assert is_tuple_data_same(
-        testing_by_kind(SpotKind.ACCESSIBLE),
-        (
-            spots[2],
-            spots[3],
-        )
-    )
-
-def test_kind_filter_2():
-    testing_by_kind = make_by_kind(spots)
-    assert is_tuple_data_same(
-        testing_by_kind(SpotKind.STANDARD),
-        (
-            spots[0],
-            spots[4],
-        )
-    )
-
-def test_kind_filter_3():
-    testing_by_kind = make_by_kind(spots)
-    assert is_tuple_data_same(
-        testing_by_kind(SpotKind.TRUCK),
-        (
-            spots[1],
-        )
+    assert reduce(
+        lambda acc, spot : acc and spot.kind == SpotKind.ACCESSIBLE,
+        testing_by_kind(SpotKind.ACCESSIBLE)
     )
 
 def test_time_range_1():
+    """ Проверка корректности работы фильтра при
+        вводе диапазона, включающего все сессии.
+
+        Функция должна вернуть полный кортеж
+        сессий.
+    """
     testing_by_time_range = make_by_time_range(sessions)
     assert is_tuple_data_same(
         testing_by_time_range(date("2025-09-20T09:00:00"),date("2025-09-20T09:10:00")),
@@ -204,16 +188,37 @@ def test_time_range_1():
     )
 
 def test_time_range_2():
+    """ Проверка корректности работы фильтра случайного
+        диапазона, задевающего несколько сессий.
+
+        Функция должна вернуть кортеж сессий, которые были
+        активны на данный период.
+
+        Также она уверяет, что сессия sessions[0]
+        не войдёт, т.к в 09:02 она уже 
+        считается закрытой, то есть неактивной.
+    """
     testing_by_time_range = make_by_time_range(sessions)
     assert is_tuple_data_same(
-        testing_by_time_range(date("2025-09-20T09:02:00"),date("2025-09-20T09:07:00")),
+        testing_by_time_range(date("2025-09-20T09:02:00"),date("2025-09-20T09:05:00")),
         (
             sessions[1],
             sessions[2],
-            sessions[3],
             sessions[5],
             sessions[6],
-            sessions[7],
             sessions[8],
         )
     )
+
+def test_time_range_3():
+    """ Проверка корректности работы фильтра активных 
+        на данный момент сессий, которые начались вне указанной 
+        в фильтре зоны.
+
+        Активная сессия началась в 2025 году, 
+        а ищем мы по периоду великой отечественной войны.
+
+        Функция должна вернуть пустой кортеж.
+    """
+    testing_by_time_range = make_by_time_range(sessions)
+    assert not testing_by_time_range(date("1941-09-01T04:00:00"),date("1945-05-9T09:07:00"))

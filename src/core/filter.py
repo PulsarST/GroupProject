@@ -18,6 +18,6 @@ def make_by_kind(spots: Tuple[Spot, ...]):
 # Смотрит активные сесси на период
 def make_by_time_range(sessions: Tuple[Session, ...]):
     def by_time_range(start: datetime, end: datetime) -> Tuple[Session, ...]:
-        return tuple(filter(lambda session: (session.end == None or start <= session.end) and end >= session.start, sessions))
+        return tuple(filter(lambda session: (session.end == None or start < session.end) and end >= session.start, sessions))
 
     return by_time_range
