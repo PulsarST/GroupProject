@@ -1,4 +1,3 @@
-from server import app
 from client import main_page
 import flet as ft
 

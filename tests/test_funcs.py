@@ -316,7 +316,6 @@ def test_open_session_3():
 
 
 def test_close_session_1():
-
     a: Session = Session(
         "session_1",
         "v1",
@@ -365,7 +364,6 @@ def test_close_session_1():
 
 
 def test_close_session_2():
-
     a: Session = Session(
         "session_1",
         "v1",
@@ -435,7 +433,6 @@ def test_total_revenue():
 
 
 def test_active_sessions():
-
     (s1, s2, s3, s4, s5) = (
         Session(
             "s1",

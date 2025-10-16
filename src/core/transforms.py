@@ -12,7 +12,8 @@ from .domain import *
 from .enums import *
 
 # ---- Сокращённый создатель datetime бъекта ----
-date = lambda str : datetime.strptime(str,"%Y-%m-%dT%H:%M:%S")
+date = lambda str: datetime.strptime(str, "%Y-%m-%dT%H:%M:%S")
+
 
 # ---- Загрузчик сид-данных ----
 def _to_tuple(cls, items):
@@ -201,8 +202,5 @@ def is_obj_data_same(a: object, b: object) -> bool:
 def is_tuple_data_same(a: Tuple[object, ...], b: Tuple[object, ...]) -> bool:
     return len(a) == len(b) and reduce(
         lambda acc, next: acc and next,
-        [
-            is_obj_data_same(a[i], b[i])
-            for i in range(len(a))
-            ],
+        [is_obj_data_same(a[i], b[i]) for i in range(len(a))],
     )
