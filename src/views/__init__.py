@@ -7,6 +7,5 @@ __all__ = [
     "HomeContent",
     "DataContent",
     "AboutContent",
-    "SignInUpContent"
+    "SignInUpContent",
 ]
-
