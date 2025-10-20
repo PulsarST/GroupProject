@@ -1,12 +1,19 @@
+import asyncio
+from typing import Dict
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from core import transforms
-from dataclasses import asdict
-from typing import Dict, Tuple
+from sqlalchemy import create_engine, except_
+from sqlalchemy.orm import sessionmaker
+
+from sqlalchemy.ext.asyncio import (
+        create_async_engine,
+        AsyncSession,
+        async_sessionmaker)
+
+from database.database import Base
 
 app = FastAPI(title="Умная парковка")
 
-# Allow requests from Flet frontend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -14,54 +21,35 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-state: Dict[str, Tuple] = {}
+engine = create_async_engine("sqlite:///.../data/database.db")
+SessionDB = async_sessionmaker(
+    bind=engine,
+    autoflush=False,
+    autocommit=False
+)
+
+async def create_tables() -> None:
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+    print("Tables are created all")
 
 
-@app.post("/load_seed")
-async def load_seed():
-    zones, spots, tariffs, vehicles, events, rules, sessions, payments, violations = (
-        transforms.load_seed("./src/data/seed.json")
-    )
+async def get_db():
+    async with SessionDB() as session:
+        try:
+            yield session
+        except Exception:
+            await session.rollback()
+            raise
+        finally:
+            await session.close()
 
-    state["zones"] = zones
-    state["spots"] = spots
-    state["tariffs"] = tariffs
-    state["vehicles"] = vehicles
-    state["events"] = events
-    state["rules"] = rules
-    state["sessions"] = sessions
-    state["payments"] = payments
-    state["violations"] = violations
-
-    # Return counts for frontend
-    return {
-        "status": "ok",
-        "zones": len(zones),
-        "spots": len(spots),
-        "tariffs": len(tariffs),
-        "vehicles": len(vehicles),
-    }
-
-
-@app.get("/data")
-async def get_data():
-    """Return serialized state for frontend"""
-
-    def serialize_tuple(t):
-        return [asdict(x) for x in t]
-
-    return {
-        "zones": serialize_tuple(state["zones"]),
-        "spots": serialize_tuple(state["spots"]),
-        "tariffs": serialize_tuple(state["tariffs"]),
-        "vehicles": serialize_tuple(state["vehicles"]),
-        "events": serialize_tuple(state["events"]),
-        "rules": serialize_tuple(state["rules"]),
-        "sessions": serialize_tuple(state["sessions"]),
-        "payments": serialize_tuple(state["payments"]),
-        "violations": serialize_tuple(state["violations"]),
-    }
-
+asyncio.run(create_tables())
+    
+@app.get("/")
+def root() -> Dict[str, int]:
+    return {"status": 200}
 
 if __name__ == "__main__":
     import uvicorn

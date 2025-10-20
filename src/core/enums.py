@@ -6,10 +6,11 @@ class SpotStatus(str, Enum):
     AVAILABLE = "available"
 
 
-class SpotKind(str, Enum):
-    UNAVAILABLE = "unavailable"
-    ACCESSIBLE = "accessible"
+class SpotType(str, Enum):
+    INVALID = "invalid"
     STANDARD = "standard"
+    DISABLED = "disabled"
+    ELECTRIC = "electric"
     TRUCK = "truck"
 
 
