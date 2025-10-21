@@ -3,11 +3,15 @@ from typing import AsyncGenerator
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-from database.database import Base, Zone, Spot, Session, Payment, Tariff, SessionStatus
+from database.database import Base, Zone, Spot, Session, Payment, Tariff, SessionStatus, SpotStatus
 
-# путь к БД
-DB_PATH = "sqlite+aiosqlite:////home/artz/PycharmProjects/PythonProject1/GroupProject/src/data/database.db"
+import os
 
+current_dir = os.path.dirname(os.path.abspath(__file__))
+db_relative_path = os.path.join(current_dir, "..", "data", "database.db")
+db_absolute_path = os.path.abspath(db_relative_path)
+
+DB_PATH = f"sqlite+aiosqlite:///{db_absolute_path}"
 # создаём движок и фабрику сессий
 engine = create_async_engine(DB_PATH, echo=True)
 SessionDB = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
