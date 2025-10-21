@@ -1,9 +1,12 @@
 from datetime import datetime
+from functools import reduce
 from typing import AsyncGenerator
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from database.database import Base, Zone, Spot, Session, Payment, Tariff, SessionStatus, SpotStatus
+
+from utils.monads import Maybe
 
 import os
 
@@ -44,7 +47,13 @@ async def get_payments(db: AsyncSession):
     return result.scalars().all()
 
 
-async def create_session_db(db: AsyncSession, zone_id: str, spot_id: int, plate: str, tariff_id: int | None = None):
+async def create_session_db(
+    db: AsyncSession,
+    zone_id: str,
+    spot_id: int,
+    plate: str,
+    tariff_id: int | None = None
+):
     spot = await db.get(Spot, spot_id)
     if not spot or spot.zone_id != zone_id:
         raise ValueError("Invalid zone or spot")
@@ -103,6 +112,28 @@ async def create_payment_db(db: AsyncSession, session_id: int):
     await db.commit()
     await db.refresh(payment)
     return payment
+
+
+async def get_final_payment_amount(db: AsyncSession) -> int:
+    result = await db.execute(select(func.sum(Payment.amount)))
+    total = result.scalar() or 0
+    return total
+
+
+async def get_active_sessions(db: AsyncSession) -> list[Session]:
+    result = await db.execute(select(Session).filter(Session.end_time != None))
+    total = list(result.scalars().all())
+    return total
+
+
+async def get_endtime_sessions(db: AsyncSession) -> list[str]:
+    result = await db.execute(select(Session))
+    sessions = result.scalars().all()  # <-- получаем объекты Session
+
+    return [
+        Maybe(session.end_time).unwrap("Session is not completed")
+        for session in sessions
+    ]
 
 
 # --- вспомогательная функция для инициализации БД --- #

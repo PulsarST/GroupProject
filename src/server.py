@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import Depends
 from database.service import (
-    get_db, get_zones, get_spots, create_session_db, close_session_db, create_payment_db, get_sessions, get_payments
+    get_db, get_zones, get_spots, create_session_db, close_session_db, create_payment_db, get_sessions, get_payments, get_endtime_sessions
 )
 from pydantic import BaseModel
 from typing import Optional
@@ -52,6 +52,9 @@ async def api_create_payment(session_id: int, db=Depends(get_db)):
 async def api_get_payments(db=Depends(get_db)):
     return await get_payments(db)
 
+@app.get("/test_endtimes")
+async def api_get_endtime_sessions(db=Depends(get_db)):
+    return await get_endtime_sessions(db)
 
 if __name__ == "__main__":
     import uvicorn
