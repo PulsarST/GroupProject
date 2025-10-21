@@ -1,76 +1,68 @@
-from sqlalchemy import DateTime, ForeignKey, Integer, Enum as SQLEnum
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-
-from typing import List
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Float, Enum
+from sqlalchemy.orm import declarative_base, relationship
 from datetime import datetime
+import enum
 
-from core.enums import SessionStatus, SpotStatus, TariffKind
-
-
-class Base(DeclarativeBase):
-    pass
+Base = declarative_base()
 
 
-class Spot(Base):
-    __tablename__ = "spots"
+class SpotStatus(str, enum.Enum):
+    available = "available"
+    occupied = "occupied"
 
-    id: Mapped[int] = mapped_column(
-            Integer, primary_key=True, autoincrement=True)
 
-    zone_id: Mapped[int] = mapped_column(
-            Integer, ForeignKey("zones.id"))
-
-    zone: Mapped["Zone"] = relationship("Zone", back_populates="spots")
-
-    spot_type: Mapped[SpotStatus] = mapped_column(
-            SQLEnum(SpotStatus),
-            default=SpotStatus.AVAILABLE,
-            nullable=False)
+class SessionStatus(str, enum.Enum):
+    active = "active"
+    completed = "completed"
 
 
 class Zone(Base):
     __tablename__ = "zones"
 
-    id: Mapped[int] = mapped_column(
-            Integer, primary_key=True, autoincrement=True)
-    spots: Mapped[List[Spot]] = relationship("Spot", uselist=True,
-                                             back_populates="zone")
+    id = Column(String, primary_key=True)
+    name = Column(String)
+    spots = relationship("Spot", back_populates="zone")
+
+
+class Spot(Base):
+    __tablename__ = "spots"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    zone_id = Column(String, ForeignKey("zones.id"))
+    type = Column(String)
+    status = Column(Enum(SpotStatus), default=SpotStatus.available)
+    zone = relationship("Zone", back_populates="spots")
 
 
 class Tariff(Base):
-    __tablename__ = "tarrifs"
-    
-    id: Mapped[int] = mapped_column(
-            Integer, primary_key=True, autoincrement=True)
-    base: Mapped[int] = mapped_column(Integer, default=0)
-    kind: Mapped[TariffKind] = mapped_column(
-            SQLEnum(TariffKind),
-            default=None)
+    __tablename__ = "tariffs"
 
-    per_hour: Mapped[int] = mapped_column(Integer, default=0)
-    free_minutes: Mapped[int] = mapped_column(Integer, default=15)
-    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String)
+    rate = Column(Float)
+
 
 class Session(Base):
     __tablename__ = "sessions"
 
-    id: Mapped[int] = mapped_column(
-            Integer, primary_key=True, autoincrement=True)
-    start: Mapped[datetime] = mapped_column(DateTime, default=None)
-    end: Mapped[datetime] = mapped_column(DateTime, default=None)
-    status: Mapped[SessionStatus] = mapped_column(
-            SQLEnum(SessionStatus),
-            default=SessionStatus.ACTIVE,
-            nullable=False)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    zone_id = Column(String, ForeignKey("zones.id"))
+    spot_id = Column(Integer, ForeignKey("spots.id"))
+    plate = Column(String)
+    tariff_id = Column(Integer, ForeignKey("tariffs.id"))
+    start_time = Column(DateTime, default=datetime.utcnow)
+    end_time = Column(DateTime, nullable=True)
+    status = Column(Enum(SessionStatus), default=SessionStatus.active)
 
-    spot_status: Mapped[SpotStatus] = mapped_column(
-            SQLEnum(SpotStatus),
-            default=SpotStatus.AVAILABLE,
-            nullable=None)
-
-    tarriff_id: Mapped[int] = mapped_column(
-            Integer,
-            ForeignKey("tarrifs.id"))
+    zone = relationship("Zone")
+    spot = relationship("Spot")
+    tariff = relationship("Tariff")
 
 
+class Payment(Base):
+    __tablename__ = "payments"
 
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    session_id = Column(Integer, ForeignKey("sessions.id"))
+    amount = Column(Float)
+    ts = Column(DateTime, default=datetime.utcnow)

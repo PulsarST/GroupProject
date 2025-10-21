@@ -1,82 +1,107 @@
 from datetime import datetime
 from typing import AsyncGenerator
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import (
-    AsyncSession,
-    async_sessionmaker,
-    create_async_engine
-)
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-from core.enums import SessionStatus, TariffKind
-from core.schemes import Tariff
-from database.database import Base, Session, Spot
+from database.database import Base, Zone, Spot, Session, Payment, Tariff, SessionStatus
 
-engine = create_async_engine(
-    "sqlite:///.../data/database.db",
-    echo=True
-)
+# путь к БД
+DB_PATH = "sqlite+aiosqlite:////home/artz/PycharmProjects/PythonProject1/GroupProject/src/data/database.db"
 
-SessionDB = async_sessionmaker(
-    bind=engine,
-    class_=AsyncSession,
-    autoflush=False,
-    autocommit=False,
-    expire_on_commit=False
-)
-
-async def create_tables() -> None:
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-        await conn.run_sync(Base.metadata.create_all)
+# создаём движок и фабрику сессий
+engine = create_async_engine(DB_PATH, echo=True)
+SessionDB = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
 
 
-async def get_db() -> AsyncGenerator[AsyncSession]:
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with SessionDB() as session:
         yield session
 
 
-async def create_session(
-    db: AsyncSession,
-    start: datetime,
-    end: datetime,
-    tariff_kind: TariffKind
-) -> Session:
-    tariff = Tariff(
-        base=2000,
-        kind=tariff_kind,
-        per_hour=200,
-        free_minutes=15
-    )
+# --- CRUD --- #
 
-    db.add(tariff)
-    await db.flush()
+async def get_zones(db: AsyncSession):
+    result = await db.execute(select(Zone))
+    return result.scalars().all()
+
+
+async def get_spots(db: AsyncSession, zone_id: str):
+    result = await db.execute(select(Spot).where(Spot.zone_id == zone_id))
+    return result.scalars().all()
+
+
+async def get_sessions(db: AsyncSession):
+    result = await db.execute(select(Session))
+    return result.scalars().all()
+
+
+async def get_payments(db: AsyncSession):
+    result = await db.execute(select(Payment))
+    return result.scalars().all()
+
+
+async def create_session_db(db: AsyncSession, zone_id: str, spot_id: int, plate: str, tariff_id: int | None = None):
+    spot = await db.get(Spot, spot_id)
+    if not spot or spot.zone_id != zone_id:
+        raise ValueError("Invalid zone or spot")
+
+    if spot.status != "available":
+        raise ValueError("Spot is occupied")
 
     session = Session(
-        start = start,
-        end = end,
-        tarriff_id = tariff.id
+        zone_id=zone_id,
+        spot_id=spot_id,
+        plate=plate,
+        tariff_id=tariff_id,
+        start_time=datetime.utcnow(),
+        status=SessionStatus.active
     )
 
     db.add(session)
+    spot.status = "occupied"
     await db.commit()
     await db.refresh(session)
     return session
 
 
-async def close_session(db: AsyncSession, id: int):
-    session = await db.get(Session, id)
-    if not session:
-        raise ValueError("session not found")
+async def close_session_db(db: AsyncSession, session_id: int):
+    session = await db.get(Session, session_id)
+    if not session or session.status != SessionStatus.active:
+        raise ValueError("Active session not found")
 
-    if session.status == SessionStatus.CLOSED:
-        raise ValueError("session is already close")
+    session.status = SessionStatus.completed
+    session.end_time = datetime.utcnow()
 
-    session.status = SessionStatus.CLOSED
+    spot = await db.get(Spot, session.spot_id)
+    spot.status = "available"
+
     await db.commit()
+    await db.refresh(session)
+    return session
 
 
-async def get_active_sessions(db: AsyncSession) -> list[Session]:
-    stmt = select(Session).where(Session.status == SessionStatus.ACTIVE)
-    result = await db.execute(stmt)
-    return list(result.scalars().all())
+async def create_payment_db(db: AsyncSession, session_id: int):
+    session = await db.get(Session, session_id)
+    if not session or session.status != SessionStatus.completed:
+        raise ValueError("Completed session not found")
 
+    result = await db.execute(select(Payment).where(Payment.session_id == session_id))
+    if result.scalars().first():
+        raise ValueError("Payment already exists")
+
+    start = session.start_time
+    end = session.end_time or datetime.utcnow()
+    hours = (end - start).total_seconds() / 3600
+    amount = max(hours * 50, 50)
+
+    payment = Payment(session_id=session_id, amount=round(amount, 2))
+    db.add(payment)
+    await db.commit()
+    await db.refresh(payment)
+    return payment
+
+
+# --- вспомогательная функция для инициализации БД --- #
+async def create_tables():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
