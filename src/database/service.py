@@ -4,7 +4,16 @@ from typing import AsyncGenerator
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-from database.database import Base, Zone, Spot, Session, Payment, Tariff, SessionStatus, SpotStatus
+from database.database import (
+    Base,
+    Zone,
+    Spot,
+    Session,
+    Payment,
+    Tariff,
+    SessionStatus,
+    SpotStatus,
+)
 
 from utils.monads import Maybe
 
@@ -26,6 +35,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
 
 # --- CRUD --- #
+
 
 async def get_zones(db: AsyncSession):
     result = await db.execute(select(Zone))
@@ -52,7 +62,7 @@ async def create_session_db(
     zone_id: str,
     spot_id: int,
     plate: str,
-    tariff_id: int | None = None
+    tariff_id: int | None = None,
 ):
     spot = await db.get(Spot, spot_id)
     if not spot or spot.zone_id != zone_id:
@@ -67,7 +77,7 @@ async def create_session_db(
         plate=plate,
         tariff_id=tariff_id,
         start_time=datetime.utcnow(),
-        status=SessionStatus.active
+        status=SessionStatus.active,
     )
 
     db.add(session)
@@ -120,10 +130,22 @@ async def get_final_payment_amount(db: AsyncSession) -> int:
     return total
 
 
-async def get_active_sessions(db: AsyncSession) -> list[Session]:
-    result = await db.execute(select(Session).filter(Session.end_time != None))
-    total = list(result.scalars().all())
-    return total
+async def iter_all_sessions(db: AsyncSession) -> AsyncGenerator[Session, None]:
+    """Ленивый генератор всех сессий из базы."""
+    result = await db.stream(select(Session))
+    async for s in result.scalars():
+        yield s
+
+
+async def iter_active_sessions(db: AsyncSession):
+    async for s in iter_all_sessions(db):
+        if s.status == SessionStatus.active:
+            yield s
+
+
+async def get_active_sessions(db: AsyncSession):
+    result = [s async for s in iter_active_sessions(db)]
+    return result
 
 
 async def get_endtime_sessions(db: AsyncSession) -> list[str]:

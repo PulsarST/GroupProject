@@ -22,9 +22,10 @@ class Spot(BaseModel):
     exmplae:
     id: "zone1_id"
     """
+
     id: str
     status: SpotStatus
-    type:  SpotType
+    type: SpotType
 
 
 class Tariff(BaseModel):
@@ -33,6 +34,7 @@ class Tariff(BaseModel):
     how many time a car's going to stands and amount of money
     kind: ACCESSIBLE, STANDARD, HOLIDAY
     """
+
     id: str
     base: int  # базовая ставка
     kind: TariffKind
@@ -46,6 +48,7 @@ class Vehicle(BaseModel):
     describes a vehicle model
     kind: BIKE, CAR, TRUCK
     """
+
     id: str
     plate: str  # example: 123ABC05
     kind: VehicleKind
@@ -57,6 +60,7 @@ class Event(BaseModel):
     type: ENTRY, EXIT, PAY, VIOLATION, SPOT_AVAILABLE
     and SPOT_OCCUPIED
     """
+
     id: str
     type: EventType
     ts: datetime
@@ -95,4 +99,3 @@ class Payment(BaseModel):
 #    id: str
 #    kind: RuleKind
 #    payload: dict  # параметры правила (например {"hours": 3} или {"zone": "A"})
-

@@ -97,6 +97,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
 # --- CRUD --- #
 
+
 async def get_zones(db: AsyncSession):
     result = await db.execute(select(Zone))
     return result.scalars().all()
@@ -117,7 +118,13 @@ async def get_payments(db: AsyncSession):
     return result.scalars().all()
 
 
-async def create_session_db(db: AsyncSession, zone_id: str, spot_id: int, plate: str, tariff_id: int | None = None):
+async def create_session_db(
+    db: AsyncSession,
+    zone_id: str,
+    spot_id: int,
+    plate: str,
+    tariff_id: int | None = None,
+):
     spot = await db.get(Spot, spot_id)
     if not spot or spot.zone_id != zone_id:
         raise ValueError("Invalid zone or spot")
@@ -131,7 +138,7 @@ async def create_session_db(db: AsyncSession, zone_id: str, spot_id: int, plate:
         plate=plate,
         tariff_id=tariff_id,
         start_time=datetime.utcnow(),
-        status=SessionStatus.active
+        status=SessionStatus.active,
     )
 
     db.add(session)
@@ -193,7 +200,7 @@ import os
 import sys
 
 # Добавляем путь для импортов
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 
 async def generate_sessions():
@@ -201,16 +208,30 @@ async def generate_sessions():
 
     # Список тестовых автомобильных номеров
     test_plates = [
-        "А123ВС777", "Е001КХ750", "О777ОО177", "У333НН777",
-        "Т123ТТ777", "Х987ХХ777", "С555СС777", "М111ММ777",
-        "Р222РР777", "В444ВВ777", "А555АА777", "Е666ЕЕ777",
-        "О888ОО777", "У999УУ777", "Т000ТТ777", "К111КК777"
+        "А123ВС777",
+        "Е001КХ750",
+        "О777ОО177",
+        "У333НН777",
+        "Т123ТТ777",
+        "Х987ХХ777",
+        "С555СС777",
+        "М111ММ777",
+        "Р222РР777",
+        "В444ВВ777",
+        "А555АА777",
+        "Е666ЕЕ777",
+        "О888ОО777",
+        "У999УУ777",
+        "Т000ТТ777",
+        "К111КК777",
     ]
 
     async for db in get_db():
         try:
             # Получаем все доступные споты
-            result = await db.execute(text("SELECT * FROM spots WHERE status = 'available'"))
+            result = await db.execute(
+                text("SELECT * FROM spots WHERE status = 'available'")
+            )
             available_spots = result.fetchall()
 
             print(f"Всего доступных спотов: {len(available_spots)}")
@@ -230,7 +251,7 @@ async def generate_sessions():
                         id=spot_row.id,
                         zone_id=spot_row.zone_id,
                         type=spot_row.type,
-                        status=spot_row.status
+                        status=spot_row.status,
                     )
 
                     # Случайный автомобильный номер
@@ -241,13 +262,15 @@ async def generate_sessions():
                         "zone_id": spot.zone_id,
                         "spot_id": spot.id,
                         "plate": plate,
-                        "tariff_id": 1  # Используем первый тариф
+                        "tariff_id": 1,  # Используем первый тариф
                     }
 
                     session = await create_session_db(db, **session_data)
 
                     created_sessions += 1
-                    print(f"✅ Создана сессия для спота {spot.id} (Зона {spot.zone_id}), автомобиль: {plate}")
+                    print(
+                        f"✅ Создана сессия для спота {spot.id} (Зона {spot.zone_id}), автомобиль: {plate}"
+                    )
 
                 except Exception as e:
                     print(f"❌ Ошибка при создании сессии для спота {spot_row.id}: {e}")
@@ -266,7 +289,9 @@ async def generate_sessions():
 async def check_spots_status():
     """Проверяет статус спотов после генерации"""
     async for db in get_db():
-        result = await db.execute(text("""
+        result = await db.execute(
+            text(
+                """
             SELECT 
                 zone_id,
                 status,
@@ -274,7 +299,9 @@ async def check_spots_status():
             FROM spots 
             GROUP BY zone_id, status
             ORDER BY zone_id, status
-        """))
+        """
+            )
+        )
         stats = result.fetchall()
 
         print("\n📊 Статус спотов по зонам:")
@@ -285,7 +312,9 @@ async def check_spots_status():
 async def check_sessions():
     """Показывает созданные сессии"""
     async for db in get_db():
-        result = await db.execute(text("""
+        result = await db.execute(
+            text(
+                """
             SELECT 
                 s.id as session_id,
                 s.zone_id,
@@ -296,13 +325,16 @@ async def check_sessions():
             FROM sessions s
             JOIN spots sp ON s.spot_id = sp.id
             ORDER BY s.zone_id, s.spot_id
-        """))
+        """
+            )
+        )
         sessions = result.fetchall()
 
         print(f"\n📋 Созданные сессии ({len(sessions)}):")
         for session in sessions:
             print(
-                f"   Сессия {session.session_id}: зона {session.zone_id}, спот {session.spot_id} ({session.spot_type}), авто: {session.plate}")
+                f"   Сессия {session.session_id}: зона {session.zone_id}, спот {session.spot_id} ({session.spot_type}), авто: {session.plate}"
+            )
 
 
 async def update_sessions_start_time():
@@ -311,7 +343,9 @@ async def update_sessions_start_time():
     async for db in get_db():
         try:
             # Получаем все активные сессии
-            result = await db.execute(text("SELECT * FROM sessions WHERE status = 'active'"))
+            result = await db.execute(
+                text("SELECT * FROM sessions WHERE status = 'active'")
+            )
             sessions = result.fetchall()
 
             print(f"Найдено {len(sessions)} активных сессий для обновления времени")
@@ -325,8 +359,10 @@ async def update_sessions_start_time():
 
                     # Обновляем время начала
                     await db.execute(
-                        text("UPDATE sessions SET start_time = :start_time WHERE id = :id"),
-                        {"start_time": start_time, "id": session_row.id}
+                        text(
+                            "UPDATE sessions SET start_time = :start_time WHERE id = :id"
+                        ),
+                        {"start_time": start_time, "id": session_row.id},
                     )
                     updated_count += 1
 
@@ -359,6 +395,6 @@ if __name__ == "__main__":
 
     # Опционально: обновить время начала
     answer = input("\n🕐 Хотите обновить время начала сессий на случайное? (y/n): ")
-    if answer.lower() == 'y':
+    if answer.lower() == "y":
         asyncio.run(update_sessions_start_time())
         asyncio.run(check_sessions())

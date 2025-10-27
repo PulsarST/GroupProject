@@ -11,11 +11,10 @@ class Maybe:
         return self.value if self.value is not None else default
 
 
-
 class Either[T]:
-    def __init__(self, left: T | None=None, right: T | None =None):
+    def __init__(self, left: T | None = None, right: T | None = None):
         self.left: T | None = left
-        self.right: T | None  = right
+        self.right: T | None = right
 
     @staticmethod
     def right(value):
