@@ -1,0 +1,68 @@
+{
+  "zones": [
+    {"id": "A", "name": "Zone A"},
+    {"id": "B", "name": "Zone B"},
+    {"id": "C", "name": "Zone C"}
+  ],
+  "spots": [
+    {"id": "S1", "zone_id": "A", "number": 1, "status": "available", "kind": "standard", "features": ["covered","charger"]},
+    {"id": "S2", "zone_id": "A", "number": 2, "status": "available", "kind": "standard", "features": ["covered"]},
+    {"id": "S3", "zone_id": "A", "number": 3, "status": "available", "kind": "standard", "features": ["charger"]},
+    {"id": "S4", "zone_id": "A", "number": 4, "status": "available", "kind": "accessible", "features": []},
+    {"id": "S5", "zone_id": "A", "number": 5, "status": "available", "kind": "standard", "features": []},
+    {"id": "S6", "zone_id": "A", "number": 6, "status": "available", "kind": "truck", "features": []},
+
+    {"id": "S7", "zone_id": "B", "number": 1, "status": "available", "kind": "unavailable", "features": ["covered","charger"]},
+    {"id": "S8", "zone_id": "B", "number": 2, "status": "available", "kind": "standard", "features": ["covered"]},
+    {"id": "S9", "zone_id": "B", "number": 3, "status": "available", "kind": "standard", "features": ["charger"]},
+    {"id": "S10", "zone_id": "B", "number": 4, "status": "available", "kind": "accessible", "features": []},
+    {"id": "S11", "zone_id": "B", "number": 5, "status": "available", "kind": "standard", "features": []},
+    {"id": "S12", "zone_id": "B", "number": 6, "status": "available", "kind": "truck", "features": []},
+
+    {"id": "S13", "zone_id": "C", "number": 1, "status": "available", "kind": "standard", "features": ["covered","charger"]},
+    {"id": "S14", "zone_id": "C", "number": 2, "status": "available", "kind": "standard", "features": ["covered"]},
+    {"id": "S15", "zone_id": "C", "number": 3, "status": "available", "kind": "standard", "features": ["charger"]},
+    {"id": "S16", "zone_id": "C", "number": 4, "status": "available", "kind": "accessible", "features": []},
+    {"id": "S17", "zone_id": "C", "number": 5, "status": "available", "kind": "standard", "features": []},
+    {"id": "S18", "zone_id": "C", "number": 6, "status": "available", "kind": "truck", "features": []}
+  ],
+    "tariffs": [
+    {"id": "T1", "zone_id": null, "kind": "standard", "base": 100, "per_hour": 50, "free_minutes": 15},
+    {"id": "T2", "zone_id": "A", "kind": "accessible", "base": 0, "per_hour": 0, "free_minutes": 60},
+    {"id": "T3", "zone_id": "B", "kind": "holiday", "base": 200, "per_hour": 100, "free_minutes": 10}
+  ],
+  "vehicles": [
+    {"id": "V1", "plate": "123ABC05", "kind": "bike"},
+    {"id": "V2", "plate": "EV777AA01", "kind": "bike"},
+    {"id": "V3", "plate": "837ODJ76", "kind": "car"},
+    {"id": "V4", "plate": "LP873IF17", "kind": "car"},
+    {"id": "V5", "plate": "385VFE85", "kind": "car"},
+    {"id": "V6", "plate": "677OGK46", "kind": "car"},
+    {"id": "V7", "plate": "HD285CU13", "kind": "car"},
+    {"id": "V8", "plate": "IA662TJ55", "kind": "car"},
+    {"id": "V9", "plate": "BE207VN49", "kind": "truck"},
+    {"id": "V10", "plate": "KX648SH37", "kind": "truck"},
+    {"id": "V11", "plate": "863EJH67", "kind": "car"},
+    {"id": "V12", "plate": "185MOS20", "kind": "car"},
+    {"id": "V13", "plate": "062AOH74", "kind": "car"},
+    {"id": "V14", "plate": "339NGK35", "kind": "truck"},
+    {"id": "V15", "plate": "794UHS08", "kind": "bike"},
+    {"id": "V16", "plate": "UD866FY44", "kind": "bike"},
+    {"id": "V17", "plate": "MR280NS25", "kind": "car"},
+    {"id": "V18", "plate": "BX748UI07", "kind": "car"},
+    {"id": "V19", "plate": "DJ186ZZ38", "kind": "truck"},
+    {"id": "V20", "plate": "OD963TA46", "kind": "truck"}
+  ],
+  "events": [
+  ],
+  "sessions": [
+  ],
+  "payments": [   
+  ],
+  "violations": [
+  ],
+  "rules": [
+    {"id": "R1", "kind": "max_parking_time", "payload": {"max_hours": 3}},
+    {"id": "R2", "kind": "disabled_only", "payload": {"zone": "C"}}
+  ]
+}
