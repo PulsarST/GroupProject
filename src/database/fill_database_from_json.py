@@ -91,10 +91,7 @@ def fill_database():
 
     # Заполняем зоны
     for zone_data in data["zones"]:
-        zone = Zone(
-            id=zone_data["id"],
-            name=zone_data["name"]
-        )
+        zone = Zone(id=zone_data["id"], name=zone_data["name"])
         db.add(zone)
 
     # Заполняем места (spots) - преобразуем string id в integer
@@ -103,16 +100,17 @@ def fill_database():
 
     for spot_data in data["spots"]:
         # Преобразуем статус
-        status = SpotStatus.available if spot_data["status"] == "available" else SpotStatus.occupied
+        status = (
+            SpotStatus.available
+            if spot_data["status"] == "available"
+            else SpotStatus.occupied
+        )
 
         # Преобразуем тип (kind) в type
         spot_type = spot_data["kind"]
 
         spot = Spot(
-            id=spot_counter,
-            zone_id=spot_data["zone_id"],
-            type=spot_type,
-            status=status
+            id=spot_counter, zone_id=spot_data["zone_id"], type=spot_type, status=status
         )
         db.add(spot)
 
@@ -128,7 +126,7 @@ def fill_database():
         tariff = Tariff(
             id=tariff_counter,
             name=f"{tariff_data['kind']} - {tariff_data['zone_id'] or 'general'}",
-            rate=tariff_data["per_hour"] or 50.0  # Используем per_hour как rate
+            rate=tariff_data["per_hour"] or 50.0,  # Используем per_hour как rate
         )
         db.add(tariff)
 
@@ -142,11 +140,21 @@ def fill_database():
 
     for session_data in data["sessions"]:
         # Преобразуем статус
-        status = SessionStatus.completed if session_data["status"] == "closed" else SessionStatus.active
+        status = (
+            SessionStatus.completed
+            if session_data["status"] == "closed"
+            else SessionStatus.active
+        )
 
         # Преобразуем даты
-        start_time = datetime.fromisoformat(session_data["start"].replace('Z', '+00:00'))
-        end_time = datetime.fromisoformat(session_data["end"].replace('Z', '+00:00')) if session_data["end"] else None
+        start_time = datetime.fromisoformat(
+            session_data["start"].replace("Z", "+00:00")
+        )
+        end_time = (
+            datetime.fromisoformat(session_data["end"].replace("Z", "+00:00"))
+            if session_data["end"]
+            else None
+        )
 
         # Получаем vehicle данные для plate
         vehicle_id = session_data["vehicle_id"]
@@ -169,7 +177,7 @@ def fill_database():
             tariff_id=1,  # Используем первый тариф по умолчанию
             start_time=start_time,
             end_time=end_time,
-            status=status
+            status=status,
         )
         db.add(session)
 
@@ -182,7 +190,7 @@ def fill_database():
 
     for payment_data in data["payments"]:
         # Преобразуем дату
-        ts = datetime.fromisoformat(payment_data["ts"].replace('Z', '+00:00'))
+        ts = datetime.fromisoformat(payment_data["ts"].replace("Z", "+00:00"))
 
         # Получаем новый session_id
         old_session_id = payment_data["session_id"]
@@ -192,7 +200,7 @@ def fill_database():
             id=payment_counter,
             session_id=new_session_id,
             amount=payment_data["amount"],
-            ts=ts
+            ts=ts,
         )
         db.add(payment)
         payment_counter += 1

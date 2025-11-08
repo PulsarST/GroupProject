@@ -21,6 +21,7 @@ def wait_for_server(url: str, timeout: int = 30):
         time.sleep(0.5)
     raise TimeoutError("Сервер не запустился за отведённое время")
 
+
 if __name__ == "__main__":
     server_path = os.path.join(os.path.dirname(__file__), "server.py")
     server_process = subprocess.Popen([sys.executable, server_path])

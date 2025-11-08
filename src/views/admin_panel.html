@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel</title>
+<style>
+body { font-family: Arial; padding: 20px; background: #f4f4f4; }
+h2 { margin-top: 30px; }
+.container { background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
+.item { padding: 8px; border-bottom: 1px solid #eee; }
+.item:last-child { border-bottom: none; }
+button { padding: 8px 12px; margin-top: 10px; border: none; border-radius: 5px; background: #007bff; color: white; cursor: pointer; }
+button:hover { background: #0056b3; }
+</style>
+</head>
+<body>
+
+<h1>Админ-панель</h1>
+
+<div class="container">
+    <h2>Сессии</h2>
+    <div id="sessions-list"></div>
+    <button id="load-sessions">Показать больше сессий</button>
+</div>
+
+<div class="container">
+    <h2>Оплаты</h2>
+    <div id="payments-list"></div>
+    <button id="load-payments">Показать больше оплат</button>
+</div>
+
+<script>
+const chunkSize = 10;
+let sessionOffset = 0;
+let paymentOffset = 0;
+
+// Вспомогательная функция для форматирования даты
+function formatDate(dt) {
+    if (!dt) return "-";
+    const d = new Date(dt);
+    return d.toLocaleString();
+}
+
+async function fetchSessions() {
+    try {
+        const res = await fetch(`http://127.0.0.1:8000/admin_sessions?offset=${sessionOffset}&limit=${chunkSize}`);
+        if (!res.ok) throw new Error("Ошибка загрузки сессий");
+        const data = await res.json();
+        const list = document.getElementById('sessions-list');
+
+        data.forEach(s => {
+            const div = document.createElement('div');
+            div.className = 'item';
+            div.textContent = `ID: ${s.id}, Spot: ${s.spot_id}, Status: ${s.status}, Start: ${formatDate(s.start)}, End: ${formatDate(s.end)}`;
+            list.appendChild(div);
+        });
+
+        sessionOffset += data.length;
+        if (data.length < chunkSize) document.getElementById('load-sessions').disabled = true;
+    } catch (err) {
+        console.error(err);
+        alert("Не удалось загрузить сессии.");
+    }
+}
+
+async function fetchPayments() {
+    try {
+        const res = await fetch(`http://127.0.0.1:8000/admin_payments?offset=${paymentOffset}&limit=${chunkSize}`);
+        if (!res.ok) throw new Error("Ошибка загрузки оплат");
+        const data = await res.json();
+        const list = document.getElementById('payments-list');
+
+        data.forEach(p => {
+            const div = document.createElement('div');
+            div.className = 'item';
+            div.textContent = `ID: ${p.id}, Session: ${p.session_id}, Amount: ${p.amount}, Date: ${formatDate(p.ts)}`;
+            list.appendChild(div);
+        });
+
+        paymentOffset += data.length;
+        if (data.length < chunkSize) document.getElementById('load-payments').disabled = true;
+    } catch (err) {
+        console.error(err);
+        alert("Не удалось загрузить оплаты.");
+    }
+}
+
+// Подключаем кнопки
+document.getElementById('load-sessions').addEventListener('click', fetchSessions);
+document.getElementById('load-payments').addEventListener('click', fetchPayments);
+
+// Начальная подгрузка
+fetchSessions();
+fetchPayments();
+</script>
+
+</body>
+</html>
