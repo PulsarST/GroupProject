@@ -1,0 +1,4 @@
+{
+  "tests/test_funcs.py::test_spot_free": true,
+  "tests/test_lab2.py::testing_by_zone": true
+}
